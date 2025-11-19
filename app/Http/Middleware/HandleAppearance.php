@@ -16,7 +16,8 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        // Default to light on first visit (no cookie set)
+        View::share('appearance', $request->cookie('appearance') ?? 'light');
 
         return $next($request);
     }

@@ -59,15 +59,18 @@ export function initializeTheme() {
         return;
     }
 
-    // Initialize theme from saved preference or default to system...
+    // Initialize theme from saved preference or default to light on first load
     const savedAppearance = getStoredAppearance();
-    updateTheme(savedAppearance || 'system');
+    const initial = savedAppearance || 'light';
+    updateTheme(initial);
 
-    // Set up system theme change listener...
-    mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    // Set up system theme change listener only if user selected 'system'
+    if (initial === 'system') {
+        mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    }
 }
 
-const appearance = ref<Appearance>('system');
+const appearance = ref<Appearance>('light');
 
 export function useAppearance() {
     onMounted(() => {
@@ -90,6 +93,16 @@ export function useAppearance() {
         setCookie('appearance', value);
 
         updateTheme(value);
+
+        // Manage system preference listener depending on the chosen mode
+        const mql = mediaQuery();
+        if (mql) {
+            if (value === 'system') {
+                mql.addEventListener('change', handleSystemThemeChange);
+            } else {
+                mql.removeEventListener('change', handleSystemThemeChange);
+            }
+        }
     }
 
     return {
