@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import BasicLayout from '@/layouts/BasicLayout.vue';
 import { Head } from '@inertiajs/vue3';
-// Animation now plays every time; no component logic needed.
+// Landing sections
+import HeroBlurb from '@/components/LandingPage/HeroBlurb.vue'
+import FeatureGrid from '@/components/LandingPage/FeatureGrid.vue'
+import TestimonialCarousel from '@/components/LandingPage/TestimonialCarousel.vue'
+import StatsStrip from '@/components/LandingPage/StatsStrip.vue'
+import LogoCloud from '@/components/LandingPage/LogoCloud.vue'
+import CTASection from '@/components/LandingPage/CTASection.vue'
 
 interface Props {
     heroImage: string;
@@ -36,5 +42,13 @@ const props = defineProps<Props>();
                 </div>
             </div>
         </section>
+
+        <!-- Landing sections -->
+        <HeroBlurb />
+        <StatsStrip />
+        <FeatureGrid />
+        <TestimonialCarousel />
+        <LogoCloud />
+        <CTASection />
     </BasicLayout>
 </template>
