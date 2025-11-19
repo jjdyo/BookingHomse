@@ -13,3 +13,9 @@ hidden/restricted via Spaties RBAC
 
 -Documentation
 --Setup/Usage
+
+-Reminders
+--Emails/SMS reminders, and accounting for rescheduling/cancelling and everything inbetween
+
+-Horse Showcase
+--Simple horse creation and showcase functionality. Pictures, description, availability, etc
