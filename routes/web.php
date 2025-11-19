@@ -2,9 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
-    return Inertia::render('Home');
+    return Inertia::render('Home', [
+        'heroImage' => asset('images/BarnHomse169.png'),
+    ]);
 })->name('home');
 
 Route::get('/about', function () {

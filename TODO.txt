@@ -1,0 +1,15 @@
+@TODO
+-Add Spaties Permissions
+--RBAC
+--All users will have access to /dashboard for functions like booking/accounts/tracking/etc. Certain functions will be
+hidden/restricted via Spaties RBAC
+
+-Mobile Responsiveness
+--Checkpoints on mobile responsiveness and functionality
+
+-Testing
+--Unit Testing
+--Integration Testing (Payment, SMS/Email, Etc)
+
+-Documentation
+--Setup/Usage
