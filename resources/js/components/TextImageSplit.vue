@@ -8,7 +8,7 @@ interface Props {
   containerClass?: string; // extra classes for outer section
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: '',
   imageAlt: 'Illustration',
   imageRight: true,
