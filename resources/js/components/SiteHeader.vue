@@ -69,6 +69,10 @@ const authButtonHref = computed(() => (isLoggedIn.value ? '/dashboard' : '/login
                 <Button asChild>
                     <Link :href="authButtonHref">{{ authButtonLabel }}</Link>
                 </Button>
+                <!-- Logout button (only when logged in) -->
+                <Button v-if="isLoggedIn" asChild>
+                    <Link href="/logout" method="post">Logout</Link>
+                </Button>
                 <!-- Appearance toggle: light/dark/system -->
                 <Button
                     type="button"
@@ -110,6 +114,10 @@ const authButtonHref = computed(() => (isLoggedIn.value ? '/dashboard' : '/login
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                             <Link :href="authButtonHref">{{ authButtonLabel }}</Link>
+                        </DropdownMenuItem>
+                        <!-- Logout (only when logged in) -->
+                        <DropdownMenuItem v-if="isLoggedIn" asChild>
+                            <Link href="/logout" method="post">Logout</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
