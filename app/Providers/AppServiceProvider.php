@@ -5,6 +5,10 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\VerifyEmailResponse as VerifyEmailResponseContract;
 use App\Http\Responses\VerifyEmailResponse as AppVerifyEmailResponse;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
+use App\Http\Responses\LoginResponse as AppLoginResponse;
+use App\Http\Responses\RegisterResponse as AppRegisterResponse;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Bind Fortify's VerifyEmailResponse to our custom response
         $this->app->singleton(VerifyEmailResponseContract::class, AppVerifyEmailResponse::class);
+
+        // Redirect unverified users to verification page after login/register
+        $this->app->singleton(LoginResponseContract::class, AppLoginResponse::class);
+        $this->app->singleton(RegisterResponseContract::class, AppRegisterResponse::class);
     }
 
     /**
