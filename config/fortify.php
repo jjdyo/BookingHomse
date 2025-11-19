@@ -73,7 +73,8 @@ return [
     |
     */
 
-    'home' => '/',
+    // After authentication or password reset, redirect users to the dashboard
+    'home' => '/dashboard',
 
     /*
     |--------------------------------------------------------------------------
