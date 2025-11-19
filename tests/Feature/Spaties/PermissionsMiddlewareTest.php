@@ -21,7 +21,7 @@ beforeEach(function () {
 });
 
 it('allows users with the admin role to access admin-only routes', function () {
-    Role::create(['name' => 'admin', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -30,7 +30,7 @@ it('allows users with the admin role to access admin-only routes', function () {
 });
 
 it('forbids users without the admin role from accessing admin-only routes', function () {
-    Role::create(['name' => 'admin', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get('/admin-only');
@@ -38,8 +38,8 @@ it('forbids users without the admin role from accessing admin-only routes', func
 });
 
 it('allows users with a required permission to access permission-guarded routes', function () {
-    $permission = Permission::create(['name' => 'edit articles', 'guard_name' => 'web']);
-    $role = Role::create(['name' => 'editor', 'guard_name' => 'web']);
+    $permission = Permission::firstOrCreate(['name' => 'edit articles', 'guard_name' => 'web']);
+    $role = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
     $role->givePermissionTo($permission);
 
     $user = User::factory()->create();
@@ -50,7 +50,7 @@ it('allows users with a required permission to access permission-guarded routes'
 });
 
 it('forbids users without a required permission from accessing permission-guarded routes', function () {
-    Permission::create(['name' => 'edit articles', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'edit articles', 'guard_name' => 'web']);
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get('/can-edit');

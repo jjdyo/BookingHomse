@@ -14,9 +14,9 @@ beforeEach(function () {
 });
 
 it('allows assigning roles and grants permissions via roles', function () {
-    // Arrange: create role and permission
-    $role = Role::create(['name' => 'admin', 'guard_name' => 'web']);
-    $permission = Permission::create(['name' => 'edit articles', 'guard_name' => 'web']);
+    // Arrange: create role and permission (idempotent to avoid collisions with seeded data)
+    $role = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+    $permission = Permission::firstOrCreate(['name' => 'edit articles', 'guard_name' => 'web']);
     $role->givePermissionTo($permission);
 
     $user = User::factory()->create();
