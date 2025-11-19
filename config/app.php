@@ -123,4 +123,22 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Content Security Policy (CSP) options
+    |--------------------------------------------------------------------------
+    |
+    | Blade's @env directive can sometimes be unreliable in complex deploys or
+    | when config is cached. Prefer a config-driven toggle sourced from ENV so
+    | you can control CSP behavior per environment without touching views.
+    |
+    | Set CSP_UPGRADE_INSECURE_REQUESTS=true in your environment to inject the
+    | equivalent of: <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    |
+    */
+
+    'csp' => [
+        'upgrade_insecure_requests' => (bool) env('CSP_UPGRADE_INSECURE_REQUESTS', false),
+    ],
+
 ];

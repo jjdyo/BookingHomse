@@ -3,8 +3,10 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        {{-- In production, force HTTP requests to upgrade to HTTPS. Disable for local dev to avoid https://127.0.0.1 errors. --}}
+        {{-- Optionally force HTTP requests to upgrade to HTTPS (controlled via config/app.php -> csp.upgrade_insecure_requests) --}}
+        @if (config('app.csp.upgrade_insecure_requests'))
         <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+        @endif
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>
