@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLogo from '@/components/AppLogo.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +33,17 @@ const appearanceLabel = computed(() => {
             return 'System';
     }
 });
+
+// Auth-aware Login/Dashboard button
+type PageProps = {
+    auth?: {
+        user?: unknown;
+    };
+};
+const page = usePage<PageProps>();
+const isLoggedIn = computed(() => Boolean(page.props.auth && page.props.auth.user));
+const authButtonLabel = computed(() => (isLoggedIn.value ? 'Dashboard' : 'Login'));
+const authButtonHref = computed(() => (isLoggedIn.value ? '/dashboard' : '/login'));
 </script>
 
 <template>
@@ -53,6 +64,10 @@ const appearanceLabel = computed(() => {
                 </Button>
                 <Button asChild>
                     <Link href="/request-booking">Request Booking</Link>
+                </Button>
+                <!-- Login/Dashboard button depending on auth state -->
+                <Button asChild>
+                    <Link :href="authButtonHref">{{ authButtonLabel }}</Link>
                 </Button>
                 <!-- Appearance toggle: light/dark/system -->
                 <Button
@@ -92,6 +107,9 @@ const appearanceLabel = computed(() => {
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                             <Link href="/request-booking">Request Booking</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link :href="authButtonHref">{{ authButtonLabel }}</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
