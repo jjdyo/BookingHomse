@@ -19,3 +19,6 @@ hidden/restricted via Spaties RBAC
 
 -Horse Showcase
 --Simple horse creation and showcase functionality. Pictures, description, availability, etc
+
+-Vue Full Calendar + Spaties GCalender Library
+--Spaties easy gcalender manipulation can be piped into vue full calendar for easy booking UI
