@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+cd /var/www/BookingHomse || exit 1
+
+echo "Running npm run build after git pull..."
+npm run build
