@@ -1,6 +1,7 @@
 # BookingHomse
 
-![BookingHomse Logo](public/images/BarnHomse169.png)
+![BookingHomse Logo](public/images/BookingHomse169whiteBG.png)
+![BookingHomse Demo](public/images/BookingHomseDemo.gif)
 
 ## Overview
 
