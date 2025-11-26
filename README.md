@@ -30,3 +30,27 @@ Whether you're running a riding school, boarding stable, or equestrian center, B
 - **Backend**: Laravel
 - **Frontend**: Vue.js with Inertia.js
 - **Architecture**: Modern SPA experience with server-side routing
+
+## Request Booking Calendar (Foundation)
+
+A blank Vue FullCalendar has been added to the Request Booking page as a foundation for future features.
+
+- Route: GET /request-booking (named: request-booking)
+- Vue page: resources/js/pages/RequestBooking.vue
+- Packages used: @fullcalendar/core, @fullcalendar/vue3, @fullcalendar/daygrid, @fullcalendar/timegrid, @fullcalendar/interaction
+
+### How to run locally
+
+1. Install PHP and JS dependencies:
+   - composer install
+   - npm install
+2. Copy .env.example to .env and configure DB and APP_URL. Optionally set VITE_TZ for calendar timezone (e.g., VITE_TZ=America/New_York).
+3. Run database migrations:
+   - php artisan migrate
+4. Start dev servers:
+   - php artisan serve
+   - npm run dev
+5. Visit http://127.0.0.1:8000/request-booking to see the blank calendar.
+
+Notes:
+- The calendar currently renders without events. Backend endpoints and GCal sync will be added later.
