@@ -22,3 +22,8 @@ hidden/restricted via Spaties RBAC
 
 -Vue Full Calendar + Spaties GCalender Library
 --Spaties easy gcalender manipulation can be piped into vue full calendar for easy booking UI
+
+
+Can you please create and implement tests for our current features/state? Please modify your guidelines file to
+remember to create/edit tests for any new features/remember to change when editing features which will fail test. Junie
+has complete authority to run tests when needed and should organize/name them according to feature and readability.

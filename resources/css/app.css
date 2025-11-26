@@ -251,3 +251,26 @@
     }
 
 }
+
+/* Make FullCalendar events easier to read on our booking pages */
+/* Scoped to .booking-calendar so it only affects booking calendars */
+.booking-calendar .fc .fc-event {
+    font-size: 0.95rem; /* slightly larger text */
+}
+.booking-calendar .fc .fc-event .fc-event-main {
+    padding: 6px 8px; /* give the chip more breathing room */
+}
+
+/* TimeGrid (week/day) — increase row height so the bars look taller */
+.booking-calendar .fc .fc-timegrid-slot {
+    height: 2.4rem; /* default is ~2rem; bump to 2.4–2.8 as desired */
+}
+.booking-calendar .fc .fc-timegrid-event {
+    min-height: 28px; /* ensures very short events aren’t paper-thin */
+}
+
+/* DayGrid (month) — give chips a bit more height and spacing */
+.booking-calendar .fc .fc-daygrid-event {
+    padding: 4px 6px;
+    line-height: 1.2;
+}

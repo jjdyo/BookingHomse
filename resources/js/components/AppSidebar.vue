@@ -12,9 +12,8 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, CalendarDays, PawPrint, Settings } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -22,6 +21,16 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Bookings',
+        href: '/dashboard/bookings',
+        icon: CalendarDays,
+    },
+    {
+        title: 'Horses',
+        href: '/dashboard/horses',
+        icon: PawPrint,
     },
 ];
 
@@ -35,6 +44,11 @@ const footerNavItems: NavItem[] = [
         title: 'Documentation',
         href: 'https://laravel.com/docs/starter-kits#vue',
         icon: BookOpen,
+    },
+    {
+        title: 'Site Configuration',
+        href: '/dashboard/settings/site',
+        icon: Settings,
     },
 ];
 </script>

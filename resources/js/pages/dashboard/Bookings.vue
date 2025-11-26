@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import BasicLayout from '@/layouts/BasicLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard, home } from '@/routes';
 
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -9,9 +11,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 import { ref, onMounted } from 'vue';
 
-type EventClickArg = {
-    event: any;
-};
+type EventClickArg = { event: any };
 
 const selected = ref<null | {
     id: number;
@@ -57,9 +57,9 @@ const calendarOptions: any = {
     events: { url: '/timeslots/feed' },
     eventClick: onEventClick,
     // Built-in options to make events feel larger/more spacious
-    contentHeight: 900, // gives more vertical room so timeGrid rows are taller
+    contentHeight: 900,
     expandRows: true,
-    dayMaxEventRows: 4, // month view: allow more rows before "+ more"
+    dayMaxEventRows: 4,
     dayMaxEvents: true,
     // Defaults; will be overridden by public settings
     slotMinTime: '09:00:00',
@@ -74,7 +74,6 @@ onMounted(async () => {
         if (!res.ok) return;
         const s = await res.json();
         if (s?.booking_open_time && s?.booking_close_time) {
-            // Prefer using FullCalendar API so changes take effect after mount
             const api = calendarRef.value?.getApi?.();
             if (api) {
                 api.setOption('slotMinTime', s.booking_open_time);
@@ -86,7 +85,6 @@ onMounted(async () => {
                     daysOfWeek: [0,1,2,3,4,5,6],
                 });
             } else {
-                // Fallback: mutate options before first render
                 calendarOptions.slotMinTime = s.booking_open_time;
                 calendarOptions.slotMaxTime = s.booking_close_time;
                 calendarOptions.scrollTime = s.booking_open_time;
@@ -101,61 +99,61 @@ onMounted(async () => {
         // ignore
     }
 });
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Home', href: home().url },
+    { title: 'Dashboard', href: dashboard().url },
+    { title: 'Bookings', href: '/dashboard/bookings' },
+];
 </script>
 
 <template>
-    <Head title="Request Booking" />
-    <BasicLayout>
+    <Head title="Dashboard — Bookings" />
+    <AppLayout :breadcrumbs="breadcrumbs">
         <section class="mx-auto max-w-6xl p-6">
-            <h1 class="text-2xl font-semibold">Request Booking</h1>
-            <p class="mt-2 text-muted-foreground">Select a timeslot to view details and book.</p>
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-semibold">Bookings</h1>
+                <a href="/timeslots/create" class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">New Booking</a>
+            </div>
+            <p class="mt-2 text-muted-foreground">Manage availability and bookings. Click a timeslot to view details.</p>
 
             <div class="mt-6 rounded-lg border bg-background p-2 shadow-sm booking-calendar">
                 <FullCalendar ref="calendarRef" :options="calendarOptions" />
             </div>
 
-            <!-- Details Modal -->
+            <!-- Details Modal (copy of public calendar for parity) -->
             <div v-if="selected" class="fixed inset-0 z-50 flex items-center justify-center">
                 <div class="absolute inset-0 bg-black/40" @click="selected = null"></div>
                 <div class="relative z-10 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-                    <h2 class="text-xl font-semibold">{{ selected.title }}</h2>
-                    <p v-if="selected.service_name" class="mt-1 text-sm text-muted-foreground">
-                        Service: {{ selected.service_name }}
-                    </p>
-                    <p v-if="selected.trainer_name" class="text-sm text-muted-foreground">
-                        Trainer: {{ selected.trainer_name }}
-                    </p>
+                    <h2 class="text-xl font-semibold">{{ selected?.title }}</h2>
+                    <p v-if="selected?.service_name" class="mt-1 text-sm text-muted-foreground">Service: {{ selected?.service_name }}</p>
+                    <p v-if="selected?.trainer_name" class="text-sm text-muted-foreground">Trainer: {{ selected?.trainer_name }}</p>
                     <div class="mt-3 space-y-1 text-sm">
                         <div>
                             <span class="font-medium">Starts:</span>
-                            <span>{{ new Date(selected.start).toLocaleString() }}</span>
+                            <span>{{ selected?.start ? new Date(selected.start).toLocaleString() : null }}</span>
                         </div>
                         <div>
                             <span class="font-medium">Ends:</span>
-                            <span>{{ new Date(selected.end).toLocaleString() }}</span>
+                            <span>{{ selected?.end ? new Date(selected.end).toLocaleString() : null }}</span>
                         </div>
-                        <div v-if="selected.capacity !== undefined">
+                        <div v-if="selected && selected.capacity !== undefined">
                             <span class="font-medium">Capacity:</span>
-                            <span>{{ selected.capacity }}</span>
+                            <span>{{ selected?.capacity }}</span>
                         </div>
-                        <div v-if="selected.price !== undefined">
+                        <div v-if="selected && selected.price !== undefined">
                             <span class="font-medium">Price:</span>
-                            <span>${{ selected.price }}</span>
+                            <span>${{ selected?.price }}</span>
                         </div>
                     </div>
-                    <p v-if="selected.description" class="mt-4 whitespace-pre-wrap">{{ selected.description }}</p>
+                    <p v-if="selected?.description" class="mt-4 whitespace-pre-wrap">{{ selected?.description }}</p>
 
                     <div class="mt-6 flex items-center justify-end gap-3">
                         <button type="button" class="rounded-md border px-4 py-2" @click="selected = null">Close</button>
-                        <a
-                            class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-                            :href="`/book/timeslot/${selected.id}`"
-                        >
-                            Book Now!
-                        </a>
+                        <a class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700" :href="selected ? `/book/timeslot/${selected.id}` : '#'">Book Now!</a>
                     </div>
                 </div>
             </div>
         </section>
-    </BasicLayout>
+    </AppLayout>
 </template>
