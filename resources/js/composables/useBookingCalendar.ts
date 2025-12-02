@@ -72,8 +72,7 @@ export function useBookingCalendarOptions(opts: Options = {}) {
         }
       }
     } catch (e) {
-      // no-op: keep defaults if settings endpoint fails
-    }
+        return(e)    }
   });
 
   return { calendarRef, calendarOptions };
