@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SiteConfig;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -38,10 +39,19 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        // Eagerly load site settings to avoid client-side refetching for common UI elements (e.g., logo)
+        $config = SiteConfig::instance();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'site' => [
+                'site_name' => $config->site_name,
+                'booking_open_time' => $config->booking_open_time,
+                'booking_close_time' => $config->booking_close_time,
+                'logo_url' => $config->logo_url,
+            ],
             'auth' => [
                 'user' => $request->user(),
             ],

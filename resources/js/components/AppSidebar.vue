@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, CalendarDays, PawPrint, Settings } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, CalendarDays, PawPrint, Settings, User } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -31,6 +31,11 @@ const mainNavItems: NavItem[] = [
         title: 'Horses',
         href: '/dashboard/horses',
         icon: PawPrint,
+    },
+    {
+        title: 'Trainers',
+        href: '/dashboard/trainers',
+        icon: User,
     },
 ];
 

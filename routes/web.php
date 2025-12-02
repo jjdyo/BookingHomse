@@ -2,20 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\MediaController;
 use App\Http\Controllers\TimeslotController;
 use App\Http\Controllers\HorseController;
+use App\Http\Controllers\TrainerController;
 
 Route::get('/', function () {
     return Inertia::render('Home', [
         'heroImage' => asset('images/BarnHomse169.png'),
     ]);
 })->name('home');
-
-// Public media proxy for files stored on the "public" disk (avoids relying on storage symlink)
-Route::get('/media/{path}', [MediaController::class, 'public'])
-    ->where('path', '.*')
-    ->name('media.public');
 
 Route::get('/about', function () {
     return Inertia::render('About');
@@ -43,6 +38,14 @@ Route::middleware(['auth'])->group(function () {
         ->name('dashboard.horses.create');
     Route::post('/horses', [HorseController::class, 'store'])
         ->name('horses.store');
+
+    // Trainers
+    Route::get('/dashboard/trainers', [TrainerController::class, 'index'])
+        ->name('dashboard.trainers');
+    Route::get('/dashboard/trainers/create', [TrainerController::class, 'create'])
+        ->name('dashboard.trainers.create');
+    Route::post('/trainers', [TrainerController::class, 'store'])
+        ->name('trainers.store');
 
     Route::get('/timeslots/create', [TimeslotController::class, 'create'])->name('timeslots.create');
     Route::post('/timeslots', [TimeslotController::class, 'store'])->name('timeslots.store');

@@ -32,7 +32,6 @@ class SiteConfig extends Model
     public function getLogoUrlAttribute(): ?string
     {
         if (!$this->logo_path) return null;
-        // Serve via media proxy to avoid reliance on the public/storage symlink across environments
-        return route('media.public', ['path' => ltrim($this->logo_path, '/')]);
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->logo_path);
     }
 }
