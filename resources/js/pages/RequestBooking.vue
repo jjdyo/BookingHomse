@@ -44,7 +44,7 @@ const calendarRef = ref<any>(null);
 
 const calendarOptions: any = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-    initialView: 'timeGridWeek',
+    initialView: 'dayGridMonth',
     timeZone: import.meta.env.VITE_TZ ?? 'UTC',
     headerToolbar: {
         left: 'prev,next today',
@@ -119,10 +119,10 @@ onMounted(async () => {
                 <div class="absolute inset-0 bg-black/40" @click="selected = null"></div>
                 <div class="relative z-10 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
                     <h2 class="text-xl font-semibold">{{ selected.title }}</h2>
-                    <p v-if="selected.service_name" class="mt-1 text-sm text-muted-foreground">
+                    <p v-if="selected?.service_name" class="mt-1 text-sm text-muted-foreground">
                         Service: {{ selected.service_name }}
                     </p>
-                    <p v-if="selected.trainer_name" class="text-sm text-muted-foreground">
+                    <p v-if="selected?.trainer_name" class="text-sm text-muted-foreground">
                         Trainer: {{ selected.trainer_name }}
                     </p>
                     <div class="mt-3 space-y-1 text-sm">
@@ -134,22 +134,22 @@ onMounted(async () => {
                             <span class="font-medium">Ends:</span>
                             <span>{{ new Date(selected.end).toLocaleString() }}</span>
                         </div>
-                        <div v-if="selected.capacity !== undefined">
+                        <div v-if="selected?.capacity !== undefined">
                             <span class="font-medium">Capacity:</span>
                             <span>{{ selected.capacity }}</span>
                         </div>
-                        <div v-if="selected.price !== undefined">
+                        <div v-if="selected?.price !== undefined">
                             <span class="font-medium">Price:</span>
                             <span>${{ selected.price }}</span>
                         </div>
                     </div>
-                    <p v-if="selected.description" class="mt-4 whitespace-pre-wrap">{{ selected.description }}</p>
+                    <p v-if="selected?.description" class="mt-4 whitespace-pre-wrap">{{ selected.description }}</p>
 
                     <div class="mt-6 flex items-center justify-end gap-3">
                         <button type="button" class="rounded-md border px-4 py-2" @click="selected = null">Close</button>
                         <a
                             class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-                            :href="`/book/timeslot/${selected.id}`"
+                            :href="`/book/timeslot/${selected?.id}`"
                         >
                             Book Now!
                         </a>

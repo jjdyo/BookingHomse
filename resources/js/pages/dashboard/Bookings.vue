@@ -44,7 +44,7 @@ const calendarRef = ref<any>(null);
 
 const calendarOptions: any = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-    initialView: 'timeGridWeek',
+    initialView: 'dayGridMonth',
     timeZone: import.meta.env.VITE_TZ ?? 'UTC',
     headerToolbar: {
         left: 'prev,next today',
@@ -137,11 +137,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <span class="font-medium">Ends:</span>
                             <span>{{ selected?.end ? new Date(selected.end).toLocaleString() : null }}</span>
                         </div>
-                        <div v-if="selected && selected.capacity !== undefined">
+                        <div v-if="selected?.capacity !== undefined">
                             <span class="font-medium">Capacity:</span>
                             <span>{{ selected?.capacity }}</span>
                         </div>
-                        <div v-if="selected && selected.price !== undefined">
+                        <div v-if="selected?.price !== undefined">
                             <span class="font-medium">Price:</span>
                             <span>${{ selected?.price }}</span>
                         </div>
@@ -150,7 +150,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                     <div class="mt-6 flex items-center justify-end gap-3">
                         <button type="button" class="rounded-md border px-4 py-2" @click="selected = null">Close</button>
-                        <a class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700" :href="selected ? `/book/timeslot/${selected.id}` : '#'">Book Now!</a>
+                        <a class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700" :href="selected ? `/book/timeslot/${selected?.id}` : '#'">Book Now!</a>
                     </div>
                 </div>
             </div>
