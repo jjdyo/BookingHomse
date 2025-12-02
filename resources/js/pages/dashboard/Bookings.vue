@@ -5,11 +5,9 @@ import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 
 import FullCalendar from '@fullcalendar/vue3';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
 
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
 type EventClickArg = { event: any };
 
@@ -40,65 +38,7 @@ function onEventClick(arg: EventClickArg) {
     };
 }
 
-const calendarRef = ref<any>(null);
-
-const calendarOptions: any = {
-    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-    initialView: 'dayGridMonth',
-    timeZone: import.meta.env.VITE_TZ ?? 'UTC',
-    headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay',
-    },
-    weekends: true,
-    selectable: false,
-    editable: false,
-    events: { url: '/timeslots/feed' },
-    eventClick: onEventClick,
-    // Built-in options to make events feel larger/more spacious
-    contentHeight: 900,
-    expandRows: true,
-    dayMaxEventRows: 4,
-    dayMaxEvents: true,
-    // Defaults; will be overridden by public settings
-    slotMinTime: '09:00:00',
-    slotMaxTime: '19:00:00',
-    scrollTime: '09:00:00',
-    height: 'auto',
-};
-
-onMounted(async () => {
-    try {
-        const res = await fetch('/settings/public');
-        if (!res.ok) return;
-        const s = await res.json();
-        if (s?.booking_open_time && s?.booking_close_time) {
-            const api = calendarRef.value?.getApi?.();
-            if (api) {
-                api.setOption('slotMinTime', s.booking_open_time);
-                api.setOption('slotMaxTime', s.booking_close_time);
-                api.setOption('scrollTime', s.booking_open_time);
-                api.setOption('businessHours', {
-                    startTime: s.booking_open_time,
-                    endTime: s.booking_close_time,
-                    daysOfWeek: [0,1,2,3,4,5,6],
-                });
-            } else {
-                calendarOptions.slotMinTime = s.booking_open_time;
-                calendarOptions.slotMaxTime = s.booking_close_time;
-                calendarOptions.scrollTime = s.booking_open_time;
-                calendarOptions.businessHours = {
-                    startTime: s.booking_open_time,
-                    endTime: s.booking_close_time,
-                    daysOfWeek: [0,1,2,3,4,5,6],
-                };
-            }
-        }
-    } catch (e) {
-        // ignore
-    }
-});
+const { calendarRef, calendarOptions } = useBookingCalendarOptions({ eventClick: onEventClick });
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: home().url },
