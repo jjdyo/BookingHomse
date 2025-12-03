@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('horses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->string('breed');
             $table->boolean('is_bookable')->default(true);
             $table->text('notes')->nullable();

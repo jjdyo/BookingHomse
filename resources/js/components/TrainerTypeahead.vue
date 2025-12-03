@@ -41,6 +41,8 @@ const results = ref<Trainer[]>([]);
 const highlightedIndex = ref<number>(-1);
 let debounceTimer: number | undefined;
 const rootEl = ref<HTMLElement | null>(null);
+// Guard to suppress one immediate search after a programmatic selection.
+let suppressNextSearch = false;
 
 watch(
   () => props.modelValue,
@@ -51,6 +53,16 @@ watch(
 
 watch(query, (val) => {
   emit('update:modelValue', val || null);
+
+  // If selection just happened, skip triggering a search once.
+  if (suppressNextSearch) {
+    suppressNextSearch = false;
+    // Ensure no pending timers remain and menu stays closed.
+    if (debounceTimer) window.clearTimeout(debounceTimer);
+    open.value = false;
+    return;
+  }
+
   // debounce search
   if (debounceTimer) window.clearTimeout(debounceTimer);
   if (!val) {
@@ -66,12 +78,11 @@ watch(query, (val) => {
         headers: { 'Accept': 'application/json' },
         credentials: 'same-origin',
       });
-      if (!res.ok) throw new Error('Search failed');
       const data = (await res.json()) as Trainer[];
       results.value = data;
       open.value = data.length > 0;
       highlightedIndex.value = data.length ? 0 : -1;
-    } catch (e) {
+    } catch {
       // swallow; keep free-text usable
       results.value = [];
       open.value = false;
@@ -103,10 +114,25 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 function select(t: Trainer) {
+  // If a debounced search is pending, cancel it so we don't immediately
+  // reopen the dropdown with the same query right after selection.
+  if (debounceTimer) {
+    window.clearTimeout(debounceTimer);
+    debounceTimer = undefined;
+  }
+
+  // Set guard to prevent the selection from triggering a new search.
+  suppressNextSearch = true;
+
   query.value = t.name;
   emit('update:modelValue', t.name);
   emit('select', t);
+  // Close and clear current results to prevent a stale menu from reopening
+  // on focus with old results.
   open.value = false;
+  results.value = [];
+  highlightedIndex.value = -1;
+  loading.value = false;
 }
 
 function handleClickOutside(ev: MouseEvent) {
@@ -134,7 +160,6 @@ onBeforeUnmount(() => {
         :placeholder="props.placeholder"
         v-model="query"
         :disabled="props.disabled"
-        autocomplete="off"
         @focus="open = results.length > 0"
         @keydown="onKeydown"
       />
