@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Timeslot;
 use App\Http\Requests\StoreTimeslotRequest;
+use App\Http\Requests\UpdateTimeslotRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -75,6 +76,28 @@ class TimeslotController extends Controller
         $timeslot = Timeslot::create($data);
 
         return redirect()->route('request-booking')->with('success', 'Timeslot created.');
+    }
+
+    public function edit(Timeslot $timeslot): Response
+    {
+        return Inertia::render('timeslots/EditTimeslot', [
+            'timeslot' => $timeslot->only([
+                'id', 'title', 'description', 'start_at', 'end_at', 'capacity', 'is_group', 'price', 'service_name', 'trainer_name', 'location_id'
+            ]),
+        ]);
+    }
+
+    public function update(UpdateTimeslotRequest $request, Timeslot $timeslot): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $data['capacity'] = $data['capacity'] ?? 1;
+        $data['is_group'] = (bool)($data['is_group'] ?? false);
+        $data['price'] = $data['price'] ?? 0;
+
+        $timeslot->update($data);
+
+        return redirect()->route('dashboard.timeslots')->with('success', 'Timeslot updated.');
     }
 
     public function bookPlaceholder(Timeslot $timeslot): Response

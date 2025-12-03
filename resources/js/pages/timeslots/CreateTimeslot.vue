@@ -32,7 +32,25 @@ const form = useForm<FormData>({
 });
 
 function submit() {
-    form.post('/timeslots');
+    // Normalize datetime-local (no TZ) -> ISO8601 (UTC) so server stores the correct instant
+    const toIso = (value: string) => {
+        if (!value) return value as any;
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? (value as any) : d.toISOString();
+    };
+
+    form.transform((data) => ({
+        ...data,
+        start_at: toIso((data as any).start_at),
+        end_at: toIso((data as any).end_at),
+    }));
+
+    form.post('/timeslots', {
+        onFinish: () => {
+            // Reset transform so it doesn't affect future submissions
+            form.transform((d) => d as any);
+        },
+    });
 }
 
 // Lightweight reference calendar at the top so creators can see existing bookings

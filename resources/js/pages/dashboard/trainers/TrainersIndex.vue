@@ -83,6 +83,14 @@ function photoUrl(path?: string | null) {
                         </div>
                     </div>
                     <p v-if="t.bio" class="mt-3 line-clamp-4 text-sm text-gray-700">{{ t.bio }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <a
+                            class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                            :href="`/dashboard/trainers/${t.id}/edit`"
+                        >
+                            Edit
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -95,6 +103,7 @@ function photoUrl(path?: string | null) {
                             <th class="px-4 py-3">Name</th>
                             <th class="px-4 py-3">Title</th>
                             <th class="px-4 py-3">Bio</th>
+                            <th class="px-4 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -110,6 +119,14 @@ function photoUrl(path?: string | null) {
                             <td class="px-4 py-3 font-medium">{{ t.name }}</td>
                             <td class="px-4 py-3">{{ t.title || '—' }}</td>
                             <td class="px-4 py-3">{{ t.bio || '—' }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <a
+                                    class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                                    :href="`/dashboard/trainers/${t.id}/edit`"
+                                >
+                                    Edit
+                                </a>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

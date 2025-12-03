@@ -43,19 +43,19 @@ const { calendarRef, calendarOptions } = useBookingCalendarOptions({ eventClick:
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: home().url },
     { title: 'Dashboard', href: dashboard().url },
-    { title: 'Bookings', href: '/dashboard/bookings' },
+    { title: 'Timeslots', href: '/dashboard/timeslots' },
 ];
 </script>
 
 <template>
-    <Head title="Dashboard — Bookings" />
+    <Head title="Dashboard — Timeslots" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <section class="mx-auto max-w-6xl p-6">
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-semibold">Bookings</h1>
-                <a href="/timeslots/create" class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">New Booking</a>
+                <h1 class="text-2xl font-semibold">Timeslots</h1>
+                <a href="/timeslots/create" class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">New Timeslot</a>
             </div>
-            <p class="mt-2 text-muted-foreground">Manage availability and bookings. Click a timeslot to view details.</p>
+            <p class="mt-2 text-muted-foreground">Manage bookable timeslots and related bookings. Click a timeslot to view details.</p>
 
             <div class="mt-6 rounded-lg border bg-background p-2 shadow-sm booking-calendar">
                 <FullCalendar ref="calendarRef" :options="calendarOptions" />
@@ -90,6 +90,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                     <div class="mt-6 flex items-center justify-end gap-3">
                         <button type="button" class="rounded-md border px-4 py-2" @click="selected = null">Close</button>
+                        <a class="rounded-md border px-4 py-2 font-medium hover:bg-gray-50" :href="selected ? `/dashboard/timeslots/${selected?.id}/edit` : '#'">Edit</a>
                         <a class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700" :href="selected ? `/book/timeslot/${selected?.id}` : '#'">Book Now!</a>
                     </div>
                 </div>

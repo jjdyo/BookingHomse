@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTrainerRequest;
+use App\Http\Requests\UpdateTrainerRequest;
 use App\Models\Trainer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -44,5 +45,35 @@ class TrainerController extends Controller
         ]);
 
         return redirect()->route('dashboard.trainers')->with('success', 'Trainer created.');
+    }
+
+    public function edit(Trainer $trainer): Response
+    {
+        return Inertia::render('dashboard/trainers/EditTrainer', [
+            'trainer' => $trainer->only(['id', 'name', 'title', 'bio', 'photo_path']),
+        ]);
+    }
+
+    public function update(UpdateTrainerRequest $request, Trainer $trainer): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $update = [
+            'name' => $data['name'],
+            'title' => $data['title'] ?? null,
+            'bio' => $data['bio'] ?? null,
+        ];
+
+        if ($request->hasFile('photo')) {
+            // Delete old photo if present
+            if ($trainer->photo_path) {
+                Storage::disk('public')->delete($trainer->photo_path);
+            }
+            $update['photo_path'] = $request->file('photo')->store('trainers', 'public');
+        }
+
+        $trainer->update($update);
+
+        return redirect()->route('dashboard.trainers')->with('success', 'Trainer updated.');
     }
 }

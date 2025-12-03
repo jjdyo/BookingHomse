@@ -23,8 +23,8 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Bookings',
-        href: '/dashboard/bookings',
+        title: 'Timeslots',
+        href: '/dashboard/timeslots',
         icon: CalendarDays,
     },
     {

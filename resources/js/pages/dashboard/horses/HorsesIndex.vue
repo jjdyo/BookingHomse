@@ -79,6 +79,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </div>
                     <p class="mt-3 line-clamp-3 text-sm text-gray-700">{{ h.description }}</p>
                     <p v-if="h.notes" class="mt-2 line-clamp-2 text-xs text-muted-foreground">Notes: {{ h.notes }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <a
+                            class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                            :href="`/dashboard/horses/${h.id}/edit`"
+                        >
+                            Edit
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -92,6 +100,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <th class="px-4 py-3">Bookable</th>
                             <th class="px-4 py-3">Description</th>
                             <th class="px-4 py-3">Notes</th>
+                            <th class="px-4 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -105,6 +114,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </td>
                             <td class="px-4 py-3">{{ h.description }}</td>
                             <td class="px-4 py-3">{{ h.notes || '—' }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <a
+                                    class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                                    :href="`/dashboard/horses/${h.id}/edit`"
+                                >
+                                    Edit
+                                </a>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
