@@ -69,23 +69,23 @@ function photoUrl(path?: string | null) {
 
             <!-- Grid View -->
             <div v-if="grid" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div v-for="t in sorted" :key="t.id" class="rounded-lg border bg-white p-4 shadow-sm">
+                <div v-for="t in sorted" :key="t.id" class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
                     <div class="flex items-start gap-3">
                         <img
                             v-if="photoUrl(t.photo_path)"
                             :src="photoUrl(t.photo_path)!"
                             alt="Trainer photo"
-                            class="h-16 w-16 rounded-full object-cover ring-2 ring-gray-200"
+                            class="h-16 w-16 rounded-full object-cover ring-2 ring-muted"
                         />
                         <div class="flex-1">
                             <h3 class="text-lg font-semibold">{{ t.name }}</h3>
                             <p v-if="t.title" class="text-sm text-muted-foreground">{{ t.title }}</p>
                         </div>
                     </div>
-                    <p v-if="t.bio" class="mt-3 line-clamp-4 text-sm text-gray-700">{{ t.bio }}</p>
+                    <p v-if="t.bio" class="mt-3 line-clamp-4 text-sm text-muted-foreground">{{ t.bio }}</p>
                     <div class="mt-4 flex justify-end">
                         <a
-                            class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                            class="rounded-md border px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                             :href="`/dashboard/trainers/${t.id}/edit`"
                         >
                             Edit
@@ -97,7 +97,7 @@ function photoUrl(path?: string | null) {
             <!-- Rows View -->
             <div v-else class="mt-6 overflow-hidden rounded-lg border">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                    <thead class="bg-muted text-xs uppercase text-muted-foreground">
                         <tr>
                             <th class="px-4 py-3">Photo</th>
                             <th class="px-4 py-3">Name</th>
@@ -113,7 +113,7 @@ function photoUrl(path?: string | null) {
                                     v-if="photoUrl(t.photo_path)"
                                     :src="photoUrl(t.photo_path)!"
                                     alt="Trainer photo"
-                                    class="h-10 w-10 rounded-full object-cover ring-2 ring-gray-200"
+                                    class="h-10 w-10 rounded-full object-cover ring-2 ring-muted"
                                 />
                             </td>
                             <td class="px-4 py-3 font-medium">{{ t.name }}</td>
@@ -121,7 +121,7 @@ function photoUrl(path?: string | null) {
                             <td class="px-4 py-3">{{ t.bio || '—' }}</td>
                             <td class="px-4 py-3 text-right">
                                 <a
-                                    class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                                    class="rounded-md border px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                                     :href="`/dashboard/trainers/${t.id}/edit`"
                                 >
                                     Edit

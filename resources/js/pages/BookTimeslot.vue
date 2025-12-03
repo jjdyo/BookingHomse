@@ -23,7 +23,7 @@ const props = defineProps<Props>();
             <h1 class="text-2xl font-semibold">Book: {{ props.timeslot.title }}</h1>
             <p class="mt-2 text-muted-foreground">This is a placeholder page. Booking flow will be implemented next.</p>
 
-            <div class="mt-6 rounded-lg border bg-white p-5 shadow-sm">
+            <div class="mt-6 rounded-lg border bg-card p-5 text-card-foreground shadow-sm">
                 <dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
                     <div>
                         <dt class="font-medium">Starts</dt>
@@ -40,7 +40,7 @@ const props = defineProps<Props>();
                     </div>
                 </dl>
 
-                <p v-if="props.timeslot.description" class="mt-4 whitespace-pre-wrap">{{ props.timeslot.description }}</p>
+                <p v-if="props.timeslot.description" class="mt-4 whitespace-pre-wrap text-foreground">{{ props.timeslot.description }}</p>
             </div>
 
             <div class="mt-6 text-sm text-muted-foreground">
@@ -48,4 +48,4 @@ const props = defineProps<Props>();
             </div>
         </section>
     </BasicLayout>
-}</template>
+</template>

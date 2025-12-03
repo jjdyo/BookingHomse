@@ -64,7 +64,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <!-- Grid View -->
             <div v-if="grid" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div v-for="h in sorted" :key="h.id" class="rounded-lg border bg-white p-4 shadow-sm">
+                <div v-for="h in sorted" :key="h.id" class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
                     <div class="flex items-start justify-between">
                         <div>
                             <h3 class="text-lg font-semibold">{{ h.name }}</h3>
@@ -72,16 +72,18 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </div>
                         <span
                             class="rounded-full px-2 py-1 text-xs"
-                            :class="h.is_bookable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                            :class="h.is_bookable
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                                : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'"
                         >
                             {{ h.is_bookable ? 'Bookable' : 'Not bookable' }}
                         </span>
                     </div>
-                    <p class="mt-3 line-clamp-3 text-sm text-gray-700">{{ h.description }}</p>
+                    <p class="mt-3 line-clamp-3 text-sm text-muted-foreground">{{ h.description }}</p>
                     <p v-if="h.notes" class="mt-2 line-clamp-2 text-xs text-muted-foreground">Notes: {{ h.notes }}</p>
                     <div class="mt-4 flex justify-end">
                         <a
-                            class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                            class="rounded-md border px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                             :href="`/dashboard/horses/${h.id}/edit`"
                         >
                             Edit
@@ -93,7 +95,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Rows View -->
             <div v-else class="mt-6 overflow-hidden rounded-lg border">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                    <thead class="bg-muted text-xs uppercase text-muted-foreground">
                         <tr>
                             <th class="px-4 py-3">Name</th>
                             <th class="px-4 py-3">Breed</th>
@@ -108,7 +110,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <td class="px-4 py-3 font-medium">{{ h.name }}</td>
                             <td class="px-4 py-3">{{ h.breed || '—' }}</td>
                             <td class="px-4 py-3">
-                                <span :class="h.is_bookable ? 'text-green-700' : 'text-red-700'">
+                                <span :class="h.is_bookable ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">
                                     {{ h.is_bookable ? 'Yes' : 'No' }}
                                 </span>
                             </td>
@@ -116,7 +118,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <td class="px-4 py-3">{{ h.notes || '—' }}</td>
                             <td class="px-4 py-3 text-right">
                                 <a
-                                    class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+                                    class="rounded-md border px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                                     :href="`/dashboard/horses/${h.id}/edit`"
                                 >
                                     Edit

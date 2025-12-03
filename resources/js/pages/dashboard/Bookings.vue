@@ -64,7 +64,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Details Modal (copy of public calendar for parity) -->
             <div v-if="selected" class="fixed inset-0 z-50 flex items-center justify-center">
                 <div class="absolute inset-0 bg-black/40" @click="selected = null"></div>
-                <div class="relative z-10 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+                <div class="relative z-10 w-full max-w-lg rounded-lg border bg-card p-6 text-card-foreground shadow-xl">
                     <h2 class="text-xl font-semibold">{{ selected?.title }}</h2>
                     <p v-if="selected?.service_name" class="mt-1 text-sm text-muted-foreground">Service: {{ selected?.service_name }}</p>
                     <p v-if="selected?.trainer_name" class="text-sm text-muted-foreground">Trainer: {{ selected?.trainer_name }}</p>
@@ -86,11 +86,22 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <span>${{ selected?.price }}</span>
                         </div>
                     </div>
-                    <p v-if="selected?.description" class="mt-4 whitespace-pre-wrap">{{ selected?.description }}</p>
+                    <p v-if="selected?.description" class="mt-4 whitespace-pre-wrap text-foreground">{{ selected?.description }}</p>
 
                     <div class="mt-6 flex items-center justify-end gap-3">
-                        <button type="button" class="rounded-md border px-4 py-2" @click="selected = null">Close</button>
-                        <a class="rounded-md border px-4 py-2 font-medium hover:bg-gray-50" :href="selected ? `/dashboard/timeslots/${selected?.id}/edit` : '#'">Edit</a>
+                        <button
+                            type="button"
+                            class="rounded-md border bg-background px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                            @click="selected = null"
+                        >
+                            Close
+                        </button>
+                        <a
+                            class="rounded-md border bg-background px-4 py-2 font-medium hover:bg-accent hover:text-accent-foreground"
+                            :href="selected ? `/dashboard/timeslots/${selected?.id}/edit` : '#'"
+                        >
+                            Edit
+                        </a>
                         <a class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700" :href="selected ? `/book/timeslot/${selected?.id}` : '#'">Book Now!</a>
                     </div>
                 </div>
