@@ -8,6 +8,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
 import { ref } from 'vue';
+import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
 
 type FormData = {
     title: string;
@@ -188,8 +189,13 @@ const { calendarRef, calendarOptions } = useBookingCalendarOptions({ compact: tr
                         <InputError :message="form.errors.service_name" />
                     </div>
                     <div class="grid gap-2">
-                        <Label for="trainer_name">Trainer (optional)</Label>
-                        <Input id="trainer_name" name="trainer_name" v-model="form.trainer_name" placeholder="e.g., Jamie" />
+                        <TrainerTypeahead
+                            input-id="trainer_name"
+                            label="Trainer (optional)"
+                            placeholder="Type to search trainers or enter a new name"
+                            v-model="form.trainer_name"
+                            @select="(t) => (form.trainer_name = t.name)"
+                        />
                         <InputError :message="form.errors.trainer_name" />
                     </div>
                 </div>

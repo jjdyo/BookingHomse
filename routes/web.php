@@ -57,6 +57,10 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/trainers/{trainer}', [TrainerController::class, 'update'])
         ->name('trainers.update');
 
+    // Trainers search (typeahead)
+    Route::get('/trainers/search', [TrainerController::class, 'search'])
+        ->name('trainers.search');
+
     // Bookings — edit/update (URL retained under bookings for per-booking editing)
     Route::get('/dashboard/bookings/{booking}/edit', [BookingController::class, 'edit'])
         ->name('dashboard.bookings.edit');

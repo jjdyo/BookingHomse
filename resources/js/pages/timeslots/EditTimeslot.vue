@@ -7,6 +7,7 @@ import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
 
 type Timeslot = {
   id: number;
@@ -152,8 +153,13 @@ const breadcrumbs: BreadcrumbItem[] = [
             <InputError :message="form.errors.service_name" />
           </div>
           <div class="grid gap-2">
-            <Label for="trainer_name">Trainer (label)</Label>
-            <Input id="trainer_name" name="trainer_name" v-model="(form.trainer_name as any)" placeholder="e.g., Jamie" />
+            <TrainerTypeahead
+              input-id="trainer_name"
+              label="Trainer (label)"
+              placeholder="Type to search trainers or enter a new name"
+              v-model="(form.trainer_name as any)"
+              @select="(t) => (form.trainer_name = t.name as any)"
+            />
             <InputError :message="form.errors.trainer_name" />
           </div>
         </div>
