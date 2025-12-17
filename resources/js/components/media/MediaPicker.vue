@@ -39,8 +39,7 @@ async function loadDirectories() {
     if (!selectedDir.value) {
       selectedDir.value = dirsFlat.value.includes(props.contextDir) ? props.contextDir : (dirsFlat.value[0] || props.contextDir)
     }
-  } catch (e: any) {
-    // Silent fail for directories; picker can still work with contextDir
+  } catch {
     selectedDir.value = props.contextDir
   }
 }
