@@ -28,6 +28,11 @@ const mainNavItems: NavItem[] = [
         icon: CalendarDays,
     },
     {
+        title: 'Presets',
+        href: '/dashboard/timeslots/presets',
+        icon: Folder,
+    },
+    {
         title: 'Horses',
         href: '/dashboard/horses',
         icon: PawPrint,

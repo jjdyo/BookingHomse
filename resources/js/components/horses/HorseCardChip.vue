@@ -36,8 +36,8 @@ const initials = computed(() => {
   >
     <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
       <img
-        v-if="horse.photo_url"
-        :src="horse.photo_url"
+        v-if="horse.photo_url || horse.photo_path"
+        :src="horse.photo_url ?? (`/storage/${horse.photo_path}`)"
         :alt="horse.name"
         class="h-full w-full object-cover"
       />

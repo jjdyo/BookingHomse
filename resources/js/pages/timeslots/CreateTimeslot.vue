@@ -21,6 +21,7 @@ type FormData = {
     service_name: string | null;
     trainer_name: string | null;
     horse_ids: number[];
+    color: string | null;
 };
 
 const form = useForm<FormData>({
@@ -33,6 +34,7 @@ const form = useForm<FormData>({
     service_name: null,
     trainer_name: null,
     horse_ids: [],
+    color: '#3B82F6',
 });
 
 type Warnings = { trainers: boolean; horses: boolean; timeslots: boolean };
@@ -42,6 +44,7 @@ const checkingConflicts = ref(false);
 const conflictCheckError = ref<string | null>(null);
 const conflictModalOpen = ref(false);
 const conflicts = ref<{ timeslots: any[]; trainers: any[]; horses: any[] }>({ timeslots: [], trainers: [], horses: [] });
+const presetInitialHorses = ref<any[]>([]);
 
 function toIso(value: string) {
     if (!value) return value as any;
@@ -216,8 +219,8 @@ function getDraftEvent() {
     if (!startIso || !endIso || new Date(startIso).getTime() >= new Date(endIso).getTime()) return null;
 
     const title = (form as any).title as string;
-    // Always use a single consistent color for preview (green)
-    const color = '#22c55e';
+    // Use selected color or default blue
+    const color = (form as any).color || '#3B82F6';
 
     return {
         id: 'draft',
@@ -249,10 +252,39 @@ onMounted(() => {
             successCallback(ev ? [ev] : []);
         },
     });
+
+    // Prefill from preset when provided as ?preset=ID
+    tryPrefillFromPreset();
 });
 
-// Update preview as the user types/changes times
-watch(() => [(form as any).start_at, (form as any).end_at, (form as any).title], () => {
+async function tryPrefillFromPreset() {
+    const sp = new URLSearchParams(window.location.search);
+    const id = sp.get('preset');
+    if (!id) return;
+    try {
+        const res = await fetch(`/dashboard/timeslots/presets/${encodeURIComponent(id)}`, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        // Fill relevant fields, leaving start/end times untouched
+        (form as any).title = data.title ?? '';
+        (form as any).description = data.description ?? '';
+        (form as any).capacity = data.capacity ?? 1;
+        (form as any).price = data.price ?? 0;
+        (form as any).service_name = data.service_name ?? null;
+        (form as any).trainer_name = data.trainer_name ?? null;
+        (form as any).horse_ids = Array.isArray(data.horse_ids) ? data.horse_ids : [];
+        (form as any).color = data.color ?? null;
+        presetInitialHorses.value = Array.isArray(data.horses) ? data.horses : [];
+    } catch {
+        // ignore
+    }
+}
+
+// Update preview as the user types/changes times or color
+watch(() => [(form as any).start_at, (form as any).end_at, (form as any).title, (form as any).color], () => {
     refetchAllEvents();
 });
 
@@ -485,11 +517,19 @@ function submitAnyway() {
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="color">Color (optional)</Label>
+                    <input id="color" name="color" type="color" v-model="(form as any).color" class="h-10 w-24 cursor-pointer rounded-md border p-1" />
+                    <p class="text-xs text-muted-foreground">Choose an event color for calendars. Defaults to blue if left empty.</p>
+                    <InputError :message="(form.errors as any).color" />
+                </div>
+
+                <div class="grid gap-2">
                     <HorseTypeahead
                         input-id="horse_ids"
                         label="Horses (optional)"
                         placeholder="Type to search and add horses"
                         v-model="form.horse_ids"
+                        :initial="presetInitialHorses"
                     />
                     <p class="text-xs text-muted-foreground">Selected horses will be linked to this timeslot and used for overlap warnings.</p>
                     <InputError :message="form.errors['horse_ids.*'] as any" />

@@ -33,6 +33,9 @@ return new class extends Migration
             // Location
             $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
 
+            // Color
+            $table->string('color', 9)->nullable()->after('location_id');
+
             // Google Calendar sync meta
             $table->string('google_event_id')->nullable()->index();
             $table->enum('sync_status', ['pending', 'synced', 'error'])->default('pending');

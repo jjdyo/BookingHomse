@@ -7,19 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Timeslot extends Model
+class TimeslotPreset extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'preset_title',
+        'preset_description',
         'title',
         'description',
-        'start_at',
-        'end_at',
         'capacity',
         'is_group',
         'price',
-        'created_by',
         'trainer_id',
         'trainer_name',
         'service_name',
@@ -28,8 +27,6 @@ class Timeslot extends Model
     ];
 
     protected $casts = [
-        'start_at' => 'datetime',
-        'end_at' => 'datetime',
         'is_group' => 'boolean',
         'price' => 'decimal:2',
     ];
@@ -41,6 +38,6 @@ class Timeslot extends Model
 
     public function horses(): BelongsToMany
     {
-        return $this->belongsToMany(Horse::class, 'timeslot_horse');
+        return $this->belongsToMany(Horse::class, 'timeslot_preset_horse');
     }
 }

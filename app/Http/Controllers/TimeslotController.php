@@ -46,17 +46,22 @@ class TimeslotController extends Controller
         $slots = $query->orderBy('start_at')->get();
 
         return $slots->map(function (Timeslot $t) {
+            $color = $t->color ?: '#3B82F6';
+
             return [
                 'id' => $t->id,
                 'title' => $t->title,
                 'start' => $t->start_at->toIso8601String(),
                 'end' => $t->end_at->toIso8601String(),
+                'backgroundColor' => $color,
+                'borderColor' => $color,
                 'extendedProps' => [
                     'description' => $t->description,
                     'capacity' => $t->capacity,
                     'price' => $t->price,
                     'service_name' => $t->service_name,
                     'trainer_name' => $t->trainer_name,
+                    'color' => $t->color,
                 ],
             ];
         });

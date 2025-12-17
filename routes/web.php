@@ -4,6 +4,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HorseController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\TimeslotController;
+use App\Http\Controllers\TimeslotPresetController;
 use App\Http\Controllers\TrainerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,18 @@ Route::middleware(['auth'])->group(function () {
     // Timeslots dashboard index (renamed from /dashboard/bookings)
     Route::get('/dashboard/timeslots', fn () => Inertia::render('dashboard/Bookings'))
         ->name('dashboard.timeslots');
+
+    // Timeslot Presets (dashboard)
+    Route::get('/dashboard/timeslots/presets', [TimeslotPresetController::class, 'index'])->name('dashboard.timeslots.presets');
+    Route::get('/dashboard/timeslots/presets/create', [TimeslotPresetController::class, 'create'])->name('dashboard.timeslots.presets.create');
+    Route::post('/dashboard/timeslots/presets', [TimeslotPresetController::class, 'store'])->name('dashboard.timeslots.presets.store');
+    Route::get('/dashboard/timeslots/presets/{preset}/edit', [TimeslotPresetController::class, 'edit'])->name('dashboard.timeslots.presets.edit');
+    Route::put('/dashboard/timeslots/presets/{preset}', [TimeslotPresetController::class, 'update'])->name('dashboard.timeslots.presets.update');
+    Route::delete('/dashboard/timeslots/presets/{preset}', [TimeslotPresetController::class, 'destroy'])->name('dashboard.timeslots.presets.destroy');
+    // Deploy preset -> redirect to create with query
+    Route::get('/dashboard/timeslots/presets/{preset}/deploy', [TimeslotPresetController::class, 'deploy'])->name('dashboard.timeslots.presets.deploy');
+    // JSON show for prefill (expects Accept: application/json)
+    Route::get('/dashboard/timeslots/presets/{preset}', [TimeslotPresetController::class, 'show'])->name('dashboard.timeslots.presets.show');
 
     Route::get('/dashboard/horses', [HorseController::class, 'index'])
         ->name('dashboard.horses');
