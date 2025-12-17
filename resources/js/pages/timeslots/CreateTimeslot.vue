@@ -7,7 +7,7 @@ import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 
@@ -201,6 +201,60 @@ function onEventClick(arg: EventClickArg) {
 }
 
 const { calendarRef, calendarOptions } = useBookingCalendarOptions({ compact: true, eventClick: onEventClick });
+
+// --- Dynamic draft preview on the calendar ---
+// Build a client-only event that follows the form's start/end/title without affecting save logic
+const draftSourceId = 'draft-preview';
+
+function getDraftEvent() {
+    const start = (form as any).start_at as string;
+    const end = (form as any).end_at as string;
+    if (!start || !end) return null;
+    const startIso = toIso(start);
+    const endIso = toIso(end);
+    // basic guard: ensure end is after start
+    if (!startIso || !endIso || new Date(startIso).getTime() >= new Date(endIso).getTime()) return null;
+
+    const title = (form as any).title as string;
+    // Always use a single consistent color for preview (green)
+    const color = '#22c55e';
+
+    return {
+        id: 'draft',
+        title: title ? `Preview: ${title}` : 'Preview timeslot',
+        start: startIso,
+        end: endIso,
+        display: 'block',
+        backgroundColor: color,
+        borderColor: color,
+        // Add a CSS class for a subtle pulse animation
+        classNames: ['bh-draft-preview'],
+        editable: false,
+    } as any;
+}
+
+function refetchAllEvents() {
+    const api = calendarRef.value?.getApi?.();
+    if (api) api.refetchEvents();
+}
+
+onMounted(() => {
+    const api = calendarRef.value?.getApi?.();
+    if (!api) return;
+    // Add a function-based source so we can recalc the draft on each refetch
+    api.addEventSource({
+        id: draftSourceId,
+        events: (_info: any, successCallback: (events: any[]) => void) => {
+            const ev = getDraftEvent();
+            successCallback(ev ? [ev] : []);
+        },
+    });
+});
+
+// Update preview as the user types/changes times
+watch(() => [(form as any).start_at, (form as any).end_at, (form as any).title], () => {
+    refetchAllEvents();
+});
 
 // Proceed with save ignoring conflicts (used by modal "Continue")
 function submitAnyway() {
@@ -455,3 +509,15 @@ function submitAnyway() {
         </section>
     </BasicLayout>
 </template>
+
+<style>
+/* Subtle pulsing highlight for the draft preview event on the calendar */
+.bh-draft-preview {
+  animation: bh-draft-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes bh-draft-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35); }
+  50% { box-shadow: 0 0 0 30px rgba(34, 197, 94, 0.0); }
+}
+</style>
