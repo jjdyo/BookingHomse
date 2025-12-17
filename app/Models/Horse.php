@@ -32,7 +32,10 @@ class Horse extends Model
 
     public function getPhotoUrlAttribute(): ?string
     {
-        if (! $this->photo_path) return null;
+        if (! $this->photo_path) {
+            return null;
+        }
+
         return \Illuminate\Support\Facades\Storage::disk('public')->url($this->photo_path);
     }
 }
