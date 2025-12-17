@@ -15,7 +15,7 @@ class HorseFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->firstName() . ' ' . $this->faker->randomElement(['Star','Bolt','Comet','Spirit']),
+            'name' => $this->faker->unique()->firstName().' '.$this->faker->randomElement(['Star', 'Bolt', 'Comet', 'Spirit']),
             'description' => $this->faker->optional()->sentence(8),
             'breed' => $this->faker->randomElement(['Arabian', 'Quarter Horse', 'Thoroughbred', 'Mustang', 'Morgan']),
             'is_bookable' => true,

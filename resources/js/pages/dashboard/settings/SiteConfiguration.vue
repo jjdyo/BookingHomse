@@ -11,6 +11,9 @@ type PageProps = {
     booking_open_time: string; // HH:MM:SS
     booking_close_time: string; // HH:MM:SS
     logo_url?: string | null;
+    warn_overbook_trainers?: boolean;
+    warn_overbook_horses?: boolean;
+    warn_overbook_timeslots?: boolean;
   }
 }
 
@@ -20,6 +23,9 @@ const form = ref({
   booking_open_time: (page.props.config.booking_open_time ?? '09:00:00').slice(0,5),
   booking_close_time: (page.props.config.booking_close_time ?? '19:00:00').slice(0,5),
   logo: null as File | null,
+  warn_overbook_trainers: page.props.config.warn_overbook_trainers ?? true,
+  warn_overbook_horses: page.props.config.warn_overbook_horses ?? true,
+  warn_overbook_timeslots: page.props.config.warn_overbook_timeslots ?? true,
 });
 
 // UX state for upload/progress/feedback
@@ -65,6 +71,10 @@ function onSubmit(e: Event) {
   data.append('booking_open_time', openTime);
   data.append('booking_close_time', closeTime);
   if (form.value.logo) data.append('logo', form.value.logo);
+  // booleans
+  if (form.value.warn_overbook_trainers) data.append('warn_overbook_trainers', '1');
+  if (form.value.warn_overbook_horses) data.append('warn_overbook_horses', '1');
+  if (form.value.warn_overbook_timeslots) data.append('warn_overbook_timeslots', '1');
   // Use method spoofing for robust multipart handling on Laravel
   data.append('_method', 'PATCH');
 
@@ -127,7 +137,7 @@ function onSubmit(e: Event) {
 <template>
   <Head title="Dashboard — Site Configuration" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <section class="mx-auto max-w-3xl p-6">
+    <section class="mx-auto max-w-4xl p-6">
       <h1 class="text-2xl font-semibold">Site Configuration</h1>
       <p class="mt-2 text-muted-foreground">Manage global settings such as site name, booking hours, and branding.</p>
 
@@ -145,31 +155,88 @@ function onSubmit(e: Event) {
           <div class="h-2 bg-blue-600 transition-all" :style="{ width: Math.max(progress, 5) + '%' }"></div>
         </div>
 
-        <div class="space-y-2">
-          <label class="block text-sm font-medium">Site Name</label>
-          <input v-model="form.site_name" type="text" class="w-full rounded-md border px-3 py-2" />
-          <p v-if="$page.props.errors?.site_name" class="text-sm text-red-600">{{ $page.props.errors.site_name }}</p>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label class="block text-sm font-medium">Booking Opens</label>
-            <input v-model="form.booking_open_time" type="time" class="w-full rounded-md border px-3 py-2" />
-            <p v-if="$page.props.errors?.booking_open_time" class="text-sm text-red-600">{{ $page.props.errors.booking_open_time }}</p>
+        <!-- Tabs -->
+        <div class="mt-2">
+          <div class="flex gap-2 border-b">
+            <button type="button" class="px-3 py-2 text-sm"
+                    :class="activeTab==='appearance' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
+                    @click="activeTab='appearance'">Site Appearance</button>
+            <button type="button" class="px-3 py-2 text-sm"
+                    :class="activeTab==='operations' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
+                    @click="activeTab='operations'">Operations</button>
+            <button type="button" class="px-3 py-2 text-sm"
+                    :class="activeTab==='warnings' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
+                    @click="activeTab='warnings'">Warnings</button>
+            <button type="button" class="px-3 py-2 text-sm"
+                    :class="activeTab==='filler4' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
+                    @click="activeTab='filler4'">Filler 4</button>
+            <button type="button" class="px-3 py-2 text-sm"
+                    :class="activeTab==='filler5' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
+                    @click="activeTab='filler5'">Filler 5</button>
           </div>
-          <div>
-            <label class="block text-sm font-medium">Booking Closes</label>
-            <input v-model="form.booking_close_time" type="time" class="w-full rounded-md border px-3 py-2" />
-            <p v-if="$page.props.errors?.booking_close_time" class="text-sm text-red-600">{{ $page.props.errors.booking_close_time }}</p>
-          </div>
-        </div>
 
-        <div class="space-y-2">
-          <label class="block text-sm font-medium">Site Logo</label>
-          <input type="file" accept="image/*" @change="onFileChange" />
-          <p v-if="$page.props.errors?.logo" class="text-sm text-red-600">{{ $page.props.errors.logo }}</p>
-          <div v-if="logoPreview" class="mt-2">
-            <img :src="logoPreview" alt="Logo preview" class="h-12 w-auto" />
+          <!-- Tab panels -->
+          <div v-show="activeTab==='appearance'" class="mt-4 space-y-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium">Site Name</label>
+              <input v-model="form.site_name" type="text" class="w-full rounded-md border px-3 py-2" />
+              <p v-if="$page.props.errors?.site_name" class="text-sm text-red-600">{{ $page.props.errors.site_name }}</p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium">Site Logo</label>
+              <input type="file" accept="image/*" @change="onFileChange" />
+              <p v-if="$page.props.errors?.logo" class="text-sm text-red-600">{{ $page.props.errors.logo }}</p>
+              <div v-if="logoPreview" class="mt-2">
+                <img :src="logoPreview" alt="Logo preview" class="h-12 w-auto" />
+              </div>
+            </div>
+          </div>
+
+          <div v-show="activeTab==='operations'" class="mt-4 space-y-6">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="block text-sm font-medium">Booking Opens</label>
+                <input v-model="form.booking_open_time" type="time" class="w-full rounded-md border px-3 py-2" />
+                <p v-if="$page.props.errors?.booking_open_time" class="text-sm text-red-600">{{ $page.props.errors.booking_open_time }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium">Booking Closes</label>
+                <input v-model="form.booking_close_time" type="time" class="w-full rounded-md border px-3 py-2" />
+                <p v-if="$page.props.errors?.booking_close_time" class="text-sm text-red-600">{{ $page.props.errors.booking_close_time }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-show="activeTab==='warnings'" class="mt-4 space-y-4">
+            <div class="rounded-md border p-4">
+              <label class="inline-flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" v-model="form.warn_overbook_trainers" class="h-4 w-4" />
+                Warn on Trainer overlaps
+              </label>
+              <p class="mt-1 text-sm text-muted-foreground">If enabled, saving a timeslot warns when the trainer is already scheduled in an overlapping timeslot.</p>
+            </div>
+            <div class="rounded-md border p-4">
+              <label class="inline-flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" v-model="form.warn_overbook_horses" class="h-4 w-4" />
+                Warn on Horse overlaps
+              </label>
+              <p class="mt-1 text-sm text-muted-foreground">If enabled, saving a timeslot warns when any selected horse is assigned to an overlapping timeslot.</p>
+            </div>
+            <div class="rounded-md border p-4">
+              <label class="inline-flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" v-model="form.warn_overbook_timeslots" class="h-4 w-4" />
+                Warn on any Timeslot overlap
+              </label>
+              <p class="mt-1 text-sm text-muted-foreground">If enabled, saving a timeslot warns when it overlaps any other timeslot regardless of trainer/horse.</p>
+            </div>
+          </div>
+
+          <div v-show="activeTab==='filler4'" class="mt-4 text-sm text-muted-foreground">
+            Placeholder for future settings.
+          </div>
+          <div v-show="activeTab==='filler5'" class="mt-4 text-sm text-muted-foreground">
+            Placeholder for future settings.
           </div>
         </div>
 
@@ -193,3 +260,13 @@ function onSubmit(e: Event) {
     </section>
   </AppLayout>
   </template>
+
+<script lang="ts">
+export default {
+  data() {
+    return {
+      activeTab: 'appearance' as 'appearance' | 'operations' | 'warnings' | 'filler4' | 'filler5',
+    };
+  },
+};
+</script>

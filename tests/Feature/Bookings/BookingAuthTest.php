@@ -22,7 +22,7 @@ class BookingAuthTest extends TestCase
             'price' => 0,
         ]);
 
-        $this->get('/book/timeslot/' . $slot->id)
+        $this->get('/book/timeslot/'.$slot->id)
             ->assertRedirect('/login');
     }
 
@@ -39,7 +39,7 @@ class BookingAuthTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get('/book/timeslot/' . $slot->id)
+            ->get('/book/timeslot/'.$slot->id)
             ->assertOk()
             ->assertSee('Test Slot');
     }

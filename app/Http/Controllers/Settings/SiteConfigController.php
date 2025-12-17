@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\SiteConfig;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SiteConfigController extends Controller
@@ -21,6 +21,9 @@ class SiteConfigController extends Controller
                 'booking_open_time' => $config->booking_open_time,
                 'booking_close_time' => $config->booking_close_time,
                 'logo_url' => $config->logo_url,
+                'warn_overbook_trainers' => (bool) $config->warn_overbook_trainers,
+                'warn_overbook_horses' => (bool) $config->warn_overbook_horses,
+                'warn_overbook_timeslots' => (bool) $config->warn_overbook_timeslots,
             ],
         ]);
     }
@@ -73,6 +76,9 @@ class SiteConfigController extends Controller
             'booking_close_time' => ['required', 'date_format:H:i', 'after:booking_open_time'],
             // Accept common image mime types including SVG; avoid Laravel's image rule which rejects SVG
             'logo' => ['nullable', 'mimetypes:image/png,image/jpeg,image/webp,image/svg+xml', 'max:2048'],
+            'warn_overbook_trainers' => ['nullable', 'boolean'],
+            'warn_overbook_horses' => ['nullable', 'boolean'],
+            'warn_overbook_timeslots' => ['nullable', 'boolean'],
         ]);
 
         $original = [
@@ -83,8 +89,13 @@ class SiteConfigController extends Controller
         ];
 
         $config->site_name = $data['site_name'];
-        $config->booking_open_time = $data['booking_open_time'] . ':00';
-        $config->booking_close_time = $data['booking_close_time'] . ':00';
+        $config->booking_open_time = $data['booking_open_time'].':00';
+        $config->booking_close_time = $data['booking_close_time'].':00';
+
+        // Booleans: if missing from request, treat as false (HTML unchecked checkboxes are omitted)
+        $config->warn_overbook_trainers = (bool) ($request->boolean('warn_overbook_trainers'));
+        $config->warn_overbook_horses = (bool) ($request->boolean('warn_overbook_horses'));
+        $config->warn_overbook_timeslots = (bool) ($request->boolean('warn_overbook_timeslots'));
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('logos', 'public');
@@ -103,6 +114,9 @@ class SiteConfigController extends Controller
                 'booking_open_time' => $config->booking_open_time,
                 'booking_close_time' => $config->booking_close_time,
                 'logo_path' => $config->logo_path,
+                'warn_overbook_trainers' => (bool) $config->warn_overbook_trainers,
+                'warn_overbook_horses' => (bool) $config->warn_overbook_horses,
+                'warn_overbook_timeslots' => (bool) $config->warn_overbook_timeslots,
             ],
             'original' => $original,
         ]);
@@ -114,11 +128,15 @@ class SiteConfigController extends Controller
     public function publicSettings()
     {
         $config = SiteConfig::instance();
+
         return response()->json([
             'site_name' => $config->site_name,
             'booking_open_time' => $config->booking_open_time, // HH:MM:SS
             'booking_close_time' => $config->booking_close_time, // HH:MM:SS
             'logo_url' => $config->logo_url,
+            'warn_overbook_trainers' => (bool) $config->warn_overbook_trainers,
+            'warn_overbook_horses' => (bool) $config->warn_overbook_horses,
+            'warn_overbook_timeslots' => (bool) $config->warn_overbook_timeslots,
         ]);
     }
 }

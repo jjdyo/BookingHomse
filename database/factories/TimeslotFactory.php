@@ -19,8 +19,8 @@ class TimeslotFactory extends Factory
         $end = (clone $start)->addHours($this->faker->randomElement([1, 2]));
 
         return [
-            'title' => $this->faker->randomElement(['Lesson', 'Trail Ride', 'Clinic']) . ' ' . $this->faker->numerify('###'),
-            'description' => $this->faker->optional()->sentence(10),
+            'title' => $this->faker->randomElement(['Lesson', 'Trail Ride', 'Clinic']).' '.$this->faker->numerify('###'),
+            'description' => $this->faker->sentence(10),
             'start_at' => $start,
             'end_at' => $end,
             'capacity' => $this->faker->numberBetween(1, 8),

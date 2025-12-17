@@ -8,12 +8,14 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 import { ref } from 'vue';
+import MediaPicker from '@/components/media/MediaPicker.vue'
 
 type FormData = {
     name: string;
     title: string | null;
     bio: string | null;
     photo: File | null;
+    photo_path: string | null;
 };
 
 const form = useForm<FormData>({
@@ -21,19 +23,30 @@ const form = useForm<FormData>({
     title: null,
     bio: null,
     photo: null,
+    photo_path: null,
 });
 
 const previewUrl = ref<string | null>(null);
+const showPicker = ref(false);
 
 function onFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     form.photo = file as any;
+    // Clear selected library path when user chooses a file
+    if (file) form.photo_path = null;
     if (file) {
         previewUrl.value = URL.createObjectURL(file);
     } else {
         previewUrl.value = null;
     }
+}
+
+function onMediaSelected(media: { path: string; url: string; thumbnails_urls?: Record<string, string> }) {
+  form.photo_path = media.path
+  form.photo = null as any
+  previewUrl.value = media.thumbnails_urls?.['256'] ?? media.url
+  showPicker.value = false
 }
 
 function submit() {
@@ -73,6 +86,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <Input id="photo" name="photo" type="file" accept="image/*" @change="onFileChange" />
                         <InputError :message="form.errors.photo" />
                         <p class="text-xs text-muted-foreground">Square images look best. Max 5 MB.</p>
+                        <div class="flex items-center gap-2">
+                          <Button type="button" variant="secondary" @click="showPicker = true">Choose from library…</Button>
+                          <span class="text-xs text-muted-foreground" v-if="form.photo_path">Using library image</span>
+                        </div>
                     </div>
                 </div>
 
@@ -106,6 +123,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </Button>
                 </div>
             </form>
+
+            <!-- Media Picker Modal -->
+            <MediaPicker v-if="showPicker" :context-dir="'trainers'" @close="showPicker = false" @select="onMediaSelected" />
         </section>
     </AppLayout>
 </template>

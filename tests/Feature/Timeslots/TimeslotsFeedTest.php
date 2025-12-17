@@ -3,10 +3,8 @@
 namespace Tests\Feature\Timeslots;
 
 use App\Models\Timeslot;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Illuminate\Support\Carbon;
 
 class TimeslotsFeedTest extends TestCase
 {
@@ -29,7 +27,7 @@ class TimeslotsFeedTest extends TestCase
         ]);
 
         // FullCalendar passes ISO8601 with timezone; our controller compares strings, so use exact window that overlaps
-        $json = $this->getJson('/timeslots/feed?start=' . $start->copy()->subMinutes(1)->toIso8601String() . '&end=' . $end->copy()->addMinutes(1)->toIso8601String())
+        $json = $this->getJson('/timeslots/feed?start='.$start->copy()->subMinutes(1)->toIso8601String().'&end='.$end->copy()->addMinutes(1)->toIso8601String())
             ->assertOk()
             ->json();
 

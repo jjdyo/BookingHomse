@@ -99,6 +99,7 @@ class BookingFactory extends Factory
     {
         return $this->state(function () {
             $paidAt = Carbon::now();
+
             return [
                 'payment_status' => 'paid',
                 'paid_at' => $paidAt,

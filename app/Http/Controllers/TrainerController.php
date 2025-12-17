@@ -33,8 +33,9 @@ class TrainerController extends Controller
     {
         $data = $request->validated();
 
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
+        // Prefer selected library path when provided; otherwise process uploaded file
+        $photoPath = $data['photo_path'] ?? null;
+        if (! $photoPath && $request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('trainers', 'public');
         }
 
@@ -71,6 +72,9 @@ class TrainerController extends Controller
                 Storage::disk('public')->delete($trainer->photo_path);
             }
             $update['photo_path'] = $request->file('photo')->store('trainers', 'public');
+        } elseif (! empty($data['photo_path'])) {
+            // Switch to an existing library image without deleting the old file (it may be referenced elsewhere)
+            $update['photo_path'] = $data['photo_path'];
         }
 
         $trainer->update($update);
@@ -89,8 +93,8 @@ class TrainerController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:25'],
         ]);
 
-        $q = trim((string)($validated['q'] ?? ''));
-        $limit = (int)($validated['limit'] ?? 8);
+        $q = trim((string) ($validated['q'] ?? ''));
+        $limit = (int) ($validated['limit'] ?? 8);
 
         $query = Trainer::query();
         if ($q !== '') {

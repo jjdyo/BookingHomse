@@ -8,7 +8,6 @@ use App\Models\Horse;
 use App\Models\Timeslot;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,7 +23,7 @@ class BookingController extends Controller
 
         return Inertia::render('dashboard/bookings/EditBooking', [
             'booking' => $booking->only([
-                'id', 'timeslot_id', 'user_id', 'horse_id', 'status', 'payment_status', 'paid_at', 'cancelled_at', 'cancelled_by', 'cancel_reason'
+                'id', 'timeslot_id', 'user_id', 'horse_id', 'status', 'payment_status', 'paid_at', 'cancelled_at', 'cancelled_by', 'cancel_reason',
             ]),
             'users' => $users,
             'timeslots' => $timeslots,
@@ -44,7 +43,7 @@ class BookingController extends Controller
 
         // Handle cancellation metadata
         if ($booking->status === 'cancelled') {
-            if (!$booking->cancelled_at) {
+            if (! $booking->cancelled_at) {
                 $booking->cancelled_at = now();
                 $booking->cancelled_by = auth()->id();
             }
@@ -57,7 +56,7 @@ class BookingController extends Controller
         }
 
         // Auto-set paid_at when payment_status becomes paid (and not set yet)
-        if ($booking->payment_status === 'paid' && !$booking->paid_at) {
+        if ($booking->payment_status === 'paid' && ! $booking->paid_at) {
             $booking->paid_at = now();
         }
 

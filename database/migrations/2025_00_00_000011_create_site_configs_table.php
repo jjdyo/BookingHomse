@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('site_configs', function (Blueprint $table) {
@@ -14,6 +15,10 @@ return new class extends Migration {
             $table->time('booking_open_time')->default('09:00:00');
             $table->time('booking_close_time')->default('19:00:00');
             $table->string('logo_path')->nullable();
+            // Warning toggles (defaults ON)
+            $table->boolean('warn_overbook_trainers')->default(true);
+            $table->boolean('warn_overbook_horses')->default(true);
+            $table->boolean('warn_overbook_timeslots')->default(true);
             $table->timestamps();
         });
 
@@ -22,6 +27,9 @@ return new class extends Migration {
             'site_name' => 'Booking Homse',
             'booking_open_time' => '09:00:00',
             'booking_close_time' => '19:00:00',
+            'warn_overbook_trainers' => true,
+            'warn_overbook_horses' => true,
+            'warn_overbook_timeslots' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Horse;
 use App\Http\Requests\StoreHorseRequest;
 use App\Http\Requests\UpdateHorseRequest;
+use App\Models\Horse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,7 +32,7 @@ class HorseController extends Controller
     {
         $data = $request->validated();
 
-        $data['is_bookable'] = (bool)($data['is_bookable'] ?? true);
+        $data['is_bookable'] = (bool) ($data['is_bookable'] ?? true);
 
         Horse::create($data);
 
@@ -50,10 +50,32 @@ class HorseController extends Controller
     {
         $data = $request->validated();
 
-        $data['is_bookable'] = (bool)($data['is_bookable'] ?? false);
+        $data['is_bookable'] = (bool) ($data['is_bookable'] ?? false);
 
         $horse->update($data);
 
         return redirect()->route('dashboard.horses')->with('success', 'Horse updated.');
+    }
+
+    /**
+     * Lightweight typeahead search for horses.
+     * Returns id and name for bookable horses matching the query.
+     */
+    public function search(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $limit = (int) $request->query('limit', 8);
+        $limit = max(1, min($limit, 25));
+
+        $query = Horse::query()->where('is_bookable', true);
+        if ($q !== '') {
+            $query->where('name', 'like', "%{$q}%");
+        }
+
+        $horses = $query->orderBy('name')
+            ->limit($limit)
+            ->get(['id', 'name']);
+
+        return response()->json($horses);
     }
 }
