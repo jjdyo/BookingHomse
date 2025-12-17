@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('breed');
             $table->boolean('is_bookable')->default(true);
             $table->text('notes')->nullable();
+            $table->string('photo_path')->nullable()->after('notes');
             $table->timestamps();
         });
     }

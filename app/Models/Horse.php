@@ -15,6 +15,7 @@ class Horse extends Model
         'breed',
         'is_bookable',
         'notes',
+        'photo_path',
     ];
 
     protected $casts = [
@@ -27,5 +28,11 @@ class Horse extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('name');
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (! $this->photo_path) return null;
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->photo_path);
     }
 }

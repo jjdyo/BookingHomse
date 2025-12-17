@@ -19,6 +19,9 @@ class UpdateHorseRequest extends FormRequest
             'breed' => ['nullable', 'string', 'max:255'],
             'is_bookable' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
+            // Media manager inputs (either upload or existing library path)
+            'photo' => ['nullable', 'mimetypes:image/png,image/jpeg,image/webp', 'max:5120'],
+            'photo_path' => ['nullable', 'string', 'max:1024'],
         ];
     }
 }

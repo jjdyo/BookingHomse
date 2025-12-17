@@ -3,7 +3,12 @@ import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-type Horse = { id: number; name: string };
+type Horse = {
+  id: number;
+  name: string;
+  breed?: string | null;
+  photo_url?: string | null;
+};
 
 interface Props {
   modelValue: number[]; // selected horse IDs
@@ -33,6 +38,8 @@ const loading = ref(false);
 const results = ref<Horse[]>([]);
 const highlightedIndex = ref(-1);
 const selected = ref<number[]>([...props.modelValue]);
+// Keep a map of selected horse details so we can render names/avatars instead of raw IDs
+const selectedMap = ref<Record<number, Horse>>({});
 let debounceTimer: number | undefined;
 const rootEl = ref<HTMLElement | null>(null);
 
@@ -41,6 +48,8 @@ watch(
   (val) => {
     if (JSON.stringify(val) !== JSON.stringify(selected.value)) {
       selected.value = [...val];
+      // If there are IDs we don't have metadata for, we'll still show a fallback chip (#id)
+      // Optionally, a future enhancement could lazy-load details for these IDs.
     }
   }
 );
@@ -74,7 +83,10 @@ watch(query, (val) => {
 });
 
 function addHorse(h: Horse) {
-  if (!selected.value.includes(h.id)) selected.value = [...selected.value, h.id];
+  if (!selected.value.includes(h.id)) {
+    selected.value = [...selected.value, h.id];
+    selectedMap.value[h.id] = h;
+  }
   query.value = '';
   results.value = [];
   open.value = false;
@@ -120,8 +132,19 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside));
     <div class="mt-1">
       <div class="flex flex-wrap gap-2 mb-2">
         <template v-for="id in selected" :key="id">
-          <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 border border-blue-200">
-            #{{ id }}
+          <span class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 border border-blue-200">
+            <img
+              v-if="selectedMap[id]?.photo_url"
+              :src="selectedMap[id]?.photo_url as string"
+              alt=""
+              class="h-5 w-5 rounded-full object-cover"
+            />
+            <span class="truncate max-w-[12rem]">
+              {{ selectedMap[id]?.name ?? `#${id}` }}
+              <span v-if="selectedMap[id]?.breed" class="text-blue-600/70">
+                · {{ selectedMap[id]?.breed }}
+              </span>
+            </span>
             <button type="button" class="ml-1 text-blue-700 hover:text-blue-900" @click="removeHorse(id)" aria-label="Remove">
               ×
             </button>
@@ -146,12 +169,18 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside));
             v-for="(h, idx) in results"
             :key="h.id"
             type="button"
-            class="flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50"
+            class="flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left text-sm hover:bg-gray-50"
             :class="idx === highlightedIndex ? 'bg-gray-50' : ''"
             @click="addHorse(h)"
           >
-            <span>{{ h.name }}</span>
-            <span class="text-xs text-muted-foreground">#{{ h.id }}</span>
+            <img v-if="h.photo_url" :src="h.photo_url" alt="" class="h-6 w-6 rounded-full object-cover" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <span class="font-medium truncate">{{ h.name }}</span>
+                <span class="text-xs text-muted-foreground">#{{ h.id }}</span>
+              </div>
+              <div v-if="h.breed" class="text-xs text-muted-foreground truncate">{{ h.breed }}</div>
+            </div>
           </button>
           <div v-if="!loading && results.length === 0" class="px-3 py-2 text-sm text-muted-foreground">No matches</div>
         </div>

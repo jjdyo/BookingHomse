@@ -12,6 +12,7 @@ interface Horse {
     breed: string | null;
     is_bookable: boolean;
     notes: string | null;
+    photo_url?: string | null;
     created_at?: string;
     updated_at?: string;
 }
@@ -66,9 +67,14 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div v-if="grid" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div v-for="h in sorted" :key="h.id" class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
                     <div class="flex items-start justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold">{{ h.name }}</h3>
-                            <p v-if="h.breed" class="text-sm text-muted-foreground">{{ h.breed }}</p>
+                        <div class="flex items-start gap-3">
+                            <div class="h-12 w-12 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200">
+                                <img v-if="h.photo_url" :src="h.photo_url" alt="" class="h-full w-full object-cover" />
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold">{{ h.name }}</h3>
+                                <p v-if="h.breed" class="text-sm text-muted-foreground">{{ h.breed }}</p>
+                            </div>
                         </div>
                         <span
                             class="rounded-full px-2 py-1 text-xs"
@@ -107,7 +113,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </thead>
                     <tbody>
                         <tr v-for="h in sorted" :key="h.id" class="border-t">
-                            <td class="px-4 py-3 font-medium">{{ h.name }}</td>
+                            <td class="px-4 py-3 font-medium">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-8 w-8 overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200">
+                                        <img v-if="h.photo_url" :src="h.photo_url" alt="" class="h-full w-full object-cover" />
+                                    </div>
+                                    <span>{{ h.name }}</span>
+                                </div>
+                            </td>
                             <td class="px-4 py-3">{{ h.breed || '—' }}</td>
                             <td class="px-4 py-3">
                                 <span :class="h.is_bookable ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">

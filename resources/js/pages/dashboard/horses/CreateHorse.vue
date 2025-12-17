@@ -7,6 +7,8 @@ import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import { ref } from 'vue';
+import MediaPicker from '@/components/media/MediaPicker.vue'
 
 type FormData = {
     name: string;
@@ -14,6 +16,8 @@ type FormData = {
     breed: string | null;
     is_bookable: boolean;
     notes: string | null;
+    photo: File | null;
+    photo_path: string | null;
 };
 
 const form = useForm<FormData>({
@@ -22,10 +26,40 @@ const form = useForm<FormData>({
     breed: null,
     is_bookable: true,
     notes: null,
+    photo: null,
+    photo_path: null,
 });
 
+const previewUrl = ref<string | null>(null);
+const showPicker = ref(false);
+
+function onFileChange(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    form.photo = file as any;
+    if (file) {
+        // Clear picked media path when uploading a file
+        form.photo_path = null;
+        previewUrl.value = URL.createObjectURL(file);
+    } else {
+        previewUrl.value = null;
+    }
+}
+
+function onMediaSelected(media: { path: string; url: string; thumbnails_urls?: Record<string, string> }) {
+  form.photo_path = media.path
+  form.photo = null as any
+  previewUrl.value = media.thumbnails_urls?.['256'] ?? media.url
+  showPicker.value = false
+}
+
 function submit() {
-    form.post('/horses');
+    form.post('/horses', {
+        forceFormData: true,
+        onSuccess: () => {
+            if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+        },
+    });
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -47,6 +81,22 @@ const breadcrumbs: BreadcrumbItem[] = [
             <p class="mt-2 text-muted-foreground">Create a horse that can be assigned to bookings.</p>
 
             <form class="mt-6 grid gap-5" @submit.prevent="submit">
+                <div class="flex items-center gap-4">
+                    <div class="h-20 w-20 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200">
+                        <img v-if="previewUrl" :src="previewUrl" alt="Preview" class="h-full w-full object-cover" />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="photo">Photo</Label>
+                        <Input id="photo" name="photo" type="file" accept="image/*" @change="onFileChange" />
+                        <InputError :message="(form.errors as any).photo" />
+                        <p class="text-xs text-muted-foreground">Square images look best. Max 5 MB.</p>
+                        <div class="flex items-center gap-2">
+                          <Button type="button" variant="secondary" @click="showPicker = true">Choose from library…</Button>
+                          <span class="text-xs text-muted-foreground" v-if="form.photo_path">Using library image</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
                     <Input id="name" name="name" v-model="form.name" required placeholder="e.g., Starfire" />
@@ -95,6 +145,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </Button>
                 </div>
             </form>
+            <!-- Media Picker Modal -->
+            <MediaPicker v-if="showPicker" :context-dir="'horses'" @close="showPicker = false" @select="onMediaSelected" />
         </section>
     </AppLayout>
 </template>

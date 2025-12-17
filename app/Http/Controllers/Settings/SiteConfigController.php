@@ -76,6 +76,7 @@ class SiteConfigController extends Controller
             'booking_close_time' => ['required', 'date_format:H:i', 'after:booking_open_time'],
             // Accept common image mime types including SVG; avoid Laravel's image rule which rejects SVG
             'logo' => ['nullable', 'mimetypes:image/png,image/jpeg,image/webp,image/svg+xml', 'max:2048'],
+            'logo_path' => ['nullable', 'string', 'max:1024'],
             'warn_overbook_trainers' => ['nullable', 'boolean'],
             'warn_overbook_horses' => ['nullable', 'boolean'],
             'warn_overbook_timeslots' => ['nullable', 'boolean'],
@@ -104,6 +105,9 @@ class SiteConfigController extends Controller
                 Storage::disk('public')->delete($config->logo_path);
             }
             $config->logo_path = $path;
+        } elseif (! empty($data['logo_path'])) {
+            // Switch to an existing library image without deleting the old file (it may be referenced elsewhere)
+            $config->logo_path = $data['logo_path'];
         }
         $config->save();
 

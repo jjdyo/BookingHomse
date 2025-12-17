@@ -7,6 +7,8 @@ import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import { ref } from 'vue';
+import MediaPicker from '@/components/media/MediaPicker.vue'
 
 type Horse = {
     id: number;
@@ -15,6 +17,8 @@ type Horse = {
     breed: string | null;
     is_bookable: boolean;
     notes: string | null;
+    photo_path?: string | null;
+    photo_url?: string | null;
 };
 
 interface Props {
@@ -23,16 +27,56 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const form = useForm<Pick<Horse, 'name' | 'description' | 'breed' | 'is_bookable' | 'notes'>>({
+type FormData = Pick<Horse, 'name' | 'description' | 'breed' | 'is_bookable' | 'notes'> & {
+  photo: File | null;
+  photo_path: string | null;
+}
+
+const form = useForm<FormData>({
     name: props.horse.name ?? '',
     description: props.horse.description ?? '',
     breed: props.horse.breed ?? null,
     is_bookable: props.horse.is_bookable,
     notes: props.horse.notes ?? null,
+    photo: null,
+    photo_path: props.horse.photo_path ?? null,
 });
 
+const previewUrl = ref<string | null>(props.horse.photo_url ?? null);
+const showPicker = ref(false);
+
+function onFileChange(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0] ?? null;
+  form.photo = file as any;
+  if (file) {
+    // Clear picked media path when uploading a new file
+    form.photo_path = null;
+    previewUrl.value = URL.createObjectURL(file);
+  } else {
+    previewUrl.value = props.horse.photo_url ?? null;
+  }
+}
+
+function onMediaSelected(media: { path: string; url: string; thumbnails_urls?: Record<string, string> }) {
+  form.photo_path = media.path
+  form.photo = null as any
+  previewUrl.value = media.thumbnails_urls?.['256'] ?? media.url
+  showPicker.value = false
+}
+
 function submit() {
-    form.put(`/horses/${props.horse.id}`);
+    form.post(`/horses/${props.horse.id}`, {
+      forceFormData: true,
+      onSuccess: () => {
+        // cleanup preview URL if it was a blob
+        if (previewUrl.value && previewUrl.value.startsWith('blob:')) {
+          URL.revokeObjectURL(previewUrl.value)
+        }
+      },
+      preserveScroll: true,
+      headers: { 'X-HTTP-Method-Override': 'PUT' } as any,
+    });
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -54,6 +98,21 @@ const breadcrumbs: BreadcrumbItem[] = [
             <p class="mt-2 text-muted-foreground">Update horse details. These fields mirror creation fields.</p>
 
             <form class="mt-6 grid gap-5" @submit.prevent="submit">
+                <div class="flex items-center gap-4">
+                    <div class="h-20 w-20 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200">
+                        <img v-if="previewUrl" :src="previewUrl" alt="Preview" class="h-full w-full object-cover" />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="photo">Photo</Label>
+                        <Input id="photo" name="photo" type="file" accept="image/*" @change="onFileChange" />
+                        <InputError :message="(form.errors as any).photo" />
+                        <p class="text-xs text-muted-foreground">Square images look best. Max 5 MB.</p>
+                        <div class="flex items-center gap-2">
+                          <Button type="button" variant="secondary" @click="showPicker = true">Choose from library…</Button>
+                          <span class="text-xs text-muted-foreground" v-if="form.photo_path">Using library image</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
                     <Input id="name" name="name" v-model="form.name" required placeholder="e.g., Starfire" />
@@ -102,6 +161,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </Button>
                 </div>
             </form>
+            <!-- Media Picker Modal -->
+            <MediaPicker v-if="showPicker" :context-dir="'horses'" @close="showPicker = false" @select="onMediaSelected" />
         </section>
     </AppLayout>
 </template>

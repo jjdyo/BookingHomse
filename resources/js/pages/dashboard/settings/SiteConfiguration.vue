@@ -4,6 +4,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import MediaPicker from '@/components/media/MediaPicker.vue'
 
 type PageProps = {
   config: {
@@ -23,6 +24,7 @@ const form = ref({
   booking_open_time: (page.props.config.booking_open_time ?? '09:00:00').slice(0,5),
   booking_close_time: (page.props.config.booking_close_time ?? '19:00:00').slice(0,5),
   logo: null as File | null,
+  logo_path: null as string | null,
   warn_overbook_trainers: page.props.config.warn_overbook_trainers ?? true,
   warn_overbook_horses: page.props.config.warn_overbook_horses ?? true,
   warn_overbook_timeslots: page.props.config.warn_overbook_timeslots ?? true,
@@ -45,6 +47,7 @@ const isUploadingLogo = computed(() => !!form.value.logo);
 
 const logoPreview = computed(() => {
   if (form.value.logo) return URL.createObjectURL(form.value.logo);
+  // When picking from media library, we rely on page prop reload to reflect the new path
   return page.props.config.logo_url ?? null;
 });
 
@@ -52,6 +55,10 @@ function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
   const file = target.files?.[0] ?? null;
   form.value.logo = file as any;
+  if (file) {
+    // Clear any previously selected library path when uploading a file
+    form.value.logo_path = null;
+  }
 }
 
 function onSubmit(e: Event) {
@@ -71,6 +78,7 @@ function onSubmit(e: Event) {
   data.append('booking_open_time', openTime);
   data.append('booking_close_time', closeTime);
   if (form.value.logo) data.append('logo', form.value.logo);
+  if (form.value.logo_path && !form.value.logo) data.append('logo_path', form.value.logo_path);
   // booleans
   if (form.value.warn_overbook_trainers) data.append('warn_overbook_trainers', '1');
   if (form.value.warn_overbook_horses) data.append('warn_overbook_horses', '1');
@@ -113,6 +121,7 @@ function onSubmit(e: Event) {
       successMessage.value = 'Settings saved successfully.';
       // reset local file input so preview shows persisted logo from props
       form.value.logo = null;
+      form.value.logo_path = null;
       // Ensure we fetch the latest config props from server so the UI reflects DB values
       router.reload({ only: ['config'] });
     },
@@ -190,6 +199,13 @@ function onSubmit(e: Event) {
               <div v-if="logoPreview" class="mt-2">
                 <img :src="logoPreview" alt="Logo preview" class="h-12 w-auto" />
               </div>
+              <div class="mt-2 flex items-center gap-2">
+                <button type="button" class="rounded-md border px-3 py-1.5 text-sm" @click="(showPicker = true)">
+                  Choose from library…
+                </button>
+                <span class="text-xs text-muted-foreground" v-if="form.logo_path">Using library image</span>
+              </div>
+              <MediaPicker v-if="showPicker" :context-dir="'site'" @close="showPicker = false" @select="(m:any)=>{ form.logo_path = m.path; form.logo = null as any; showPicker = false }" />
             </div>
           </div>
 
@@ -266,6 +282,7 @@ export default {
   data() {
     return {
       activeTab: 'appearance' as 'appearance' | 'operations' | 'warnings' | 'filler4' | 'filler5',
+      showPicker: false as boolean,
     };
   },
 };

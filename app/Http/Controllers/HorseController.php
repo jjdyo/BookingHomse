@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateHorseRequest;
 use App\Models\Horse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,7 +17,21 @@ class HorseController extends Controller
     {
         $horses = Horse::query()
             ->ordered()
-            ->get(['id', 'name', 'description', 'breed', 'is_bookable', 'notes', 'created_at', 'updated_at']);
+            ->get(['id', 'name', 'description', 'breed', 'is_bookable', 'notes', 'photo_path', 'created_at', 'updated_at'])
+            ->map(function (Horse $h) {
+                return [
+                    'id' => $h->id,
+                    'name' => $h->name,
+                    'description' => $h->description,
+                    'breed' => $h->breed,
+                    'is_bookable' => (bool) $h->is_bookable,
+                    'notes' => $h->notes,
+                    'photo_path' => $h->photo_path,
+                    'photo_url' => $h->photo_url,
+                    'created_at' => $h->created_at,
+                    'updated_at' => $h->updated_at,
+                ];
+            });
 
         return Inertia::render('dashboard/horses/HorsesIndex', [
             'horses' => $horses,
@@ -32,9 +47,20 @@ class HorseController extends Controller
     {
         $data = $request->validated();
 
-        $data['is_bookable'] = (bool) ($data['is_bookable'] ?? true);
+        // Prefer chosen library media when provided; otherwise accept uploaded file
+        $photoPath = $data['photo_path'] ?? null;
+        if (! $photoPath && $request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('horses', 'public');
+        }
 
-        Horse::create($data);
+        Horse::create([
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'breed' => $data['breed'] ?? null,
+            'is_bookable' => (bool) ($data['is_bookable'] ?? true),
+            'notes' => $data['notes'] ?? null,
+            'photo_path' => $photoPath,
+        ]);
 
         return redirect()->route('dashboard.horses')->with('success', 'Horse created.');
     }
@@ -42,7 +68,9 @@ class HorseController extends Controller
     public function edit(Horse $horse): Response
     {
         return Inertia::render('dashboard/horses/EditHorse', [
-            'horse' => $horse->only(['id', 'name', 'description', 'breed', 'is_bookable', 'notes']),
+            'horse' => $horse->only(['id', 'name', 'description', 'breed', 'is_bookable', 'notes', 'photo_path']) + [
+                'photo_url' => $horse->photo_url,
+            ],
         ]);
     }
 
@@ -50,16 +78,31 @@ class HorseController extends Controller
     {
         $data = $request->validated();
 
-        $data['is_bookable'] = (bool) ($data['is_bookable'] ?? false);
+        $update = [
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'breed' => $data['breed'] ?? null,
+            'is_bookable' => (bool) ($data['is_bookable'] ?? false),
+            'notes' => $data['notes'] ?? null,
+        ];
 
-        $horse->update($data);
+        if ($request->hasFile('photo')) {
+            if ($horse->photo_path) {
+                Storage::disk('public')->delete($horse->photo_path);
+            }
+            $update['photo_path'] = $request->file('photo')->store('horses', 'public');
+        } elseif (! empty($data['photo_path'])) {
+            $update['photo_path'] = $data['photo_path'];
+        }
+
+        $horse->update($update);
 
         return redirect()->route('dashboard.horses')->with('success', 'Horse updated.');
     }
 
     /**
      * Lightweight typeahead search for horses.
-     * Returns id and name for bookable horses matching the query.
+     * Returns minimal details for bookable horses matching the query.
      */
     public function search(Request $request)
     {
@@ -74,8 +117,16 @@ class HorseController extends Controller
 
         $horses = $query->orderBy('name')
             ->limit($limit)
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'breed', 'photo_path'])
+            ->map(function (Horse $h) {
+                return [
+                    'id' => $h->id,
+                    'name' => $h->name,
+                    'breed' => $h->breed,
+                    'photo_url' => $h->photo_path ? Storage::disk('public')->url($h->photo_path) : null,
+                ];
+            });
 
-        return response()->json($horses);
+        return response()->json($horses->values());
     }
 }
