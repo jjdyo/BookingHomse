@@ -8,6 +8,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
+import HorseTypeahead from '@/components/HorseTypeahead.vue';
 
 type Timeslot = {
   id: number;
@@ -21,6 +22,8 @@ type Timeslot = {
   service_name: string | null;
   trainer_name: string | null;
   location_id: number | null;
+  horse_ids: number[];
+  horses?: { id: number; name: string; breed?: string | null; photo_url?: string | null }[];
 };
 
 interface Props {
@@ -43,7 +46,7 @@ function toInputDateTime(value: string | Date | null | undefined): string {
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }
 
-const form = useForm<Pick<Timeslot, 'title' | 'description' | 'start_at' | 'end_at' | 'capacity' | 'is_group' | 'price' | 'service_name' | 'trainer_name' | 'location_id'>>({
+const form = useForm<Pick<Timeslot, 'title' | 'description' | 'start_at' | 'end_at' | 'capacity' | 'is_group' | 'price' | 'service_name' | 'trainer_name' | 'location_id' | 'horse_ids'>>({
   title: props.timeslot.title ?? '',
   description: props.timeslot.description ?? '',
   start_at: toInputDateTime(props.timeslot.start_at),
@@ -54,6 +57,7 @@ const form = useForm<Pick<Timeslot, 'title' | 'description' | 'start_at' | 'end_
   service_name: props.timeslot.service_name ?? null,
   trainer_name: props.timeslot.trainer_name ?? null,
   location_id: props.timeslot.location_id ?? null,
+  horse_ids: Array.isArray(props.timeslot.horse_ids) ? [...props.timeslot.horse_ids] : [],
 });
 
 function submit() {
@@ -162,6 +166,18 @@ const breadcrumbs: BreadcrumbItem[] = [
             />
             <InputError :message="form.errors.trainer_name" />
           </div>
+        </div>
+
+        <div class="grid gap-2">
+          <HorseTypeahead
+            input-id="horse_ids"
+            label="Horses (optional)"
+            placeholder="Type to search and add horses"
+            v-model="(form.horse_ids as any)"
+            :initial="(props.timeslot as any).horses || []"
+          />
+          <p class="text-xs text-muted-foreground">Selected horses will be linked to this timeslot and considered for booking rules.</p>
+          <InputError :message="(form.errors as any)['horse_ids.*'] as any" />
         </div>
 
         <div class="flex items-center justify-end gap-3">

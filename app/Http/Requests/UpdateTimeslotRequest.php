@@ -24,6 +24,8 @@ class UpdateTimeslotRequest extends FormRequest
             'service_name' => ['nullable', 'string', 'max:255'],
             'trainer_name' => ['nullable', 'string', 'max:255'],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'horse_ids' => ['nullable', 'array'],
+            'horse_ids.*' => ['integer', 'exists:horses,id'],
         ];
     }
 }

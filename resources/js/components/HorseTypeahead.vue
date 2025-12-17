@@ -19,6 +19,8 @@ interface Props {
   inputId?: string;
   disabled?: boolean;
   limit?: number;
+  // Optional initial horse details to render chips for preselected IDs (e.g., on edit forms)
+  initial?: Horse[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -28,6 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
   inputId: 'horse_search',
   disabled: false,
   limit: 8,
+  initial: () => [],
 });
 
 const emit = defineEmits<{
@@ -57,6 +60,25 @@ watch(
 );
 
 watch(selected, (val) => emit('update:modelValue', val));
+
+// Seed selectedMap from provided initial horses when available
+function seedFromInitial() {
+  if (!props.initial || !Array.isArray(props.initial)) return;
+  for (const h of props.initial) {
+    if (h) {
+      selectedMap.value[h.id] = h;
+    }
+  }
+}
+
+// Ensure selectedMap stays in sync for any selected IDs that are present in initial
+watch(
+  () => [props.initial, selected.value],
+  () => {
+    seedFromInitial();
+  },
+  { deep: true }
+);
 
 watch(query, (val) => {
   if (debounceTimer) window.clearTimeout(debounceTimer);
@@ -124,7 +146,10 @@ function onClickOutside(ev: MouseEvent) {
   if (!rootEl.value.contains(ev.target as Node)) open.value = false;
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside));
+onMounted(() => {
+  seedFromInitial();
+  document.addEventListener('click', onClickOutside);
+});
 onBeforeUnmount(() => document.removeEventListener('click', onClickOutside));
 </script>
 

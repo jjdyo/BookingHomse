@@ -109,10 +109,39 @@ class TimeslotController extends Controller
 
     public function edit(Timeslot $timeslot): Response
     {
+        $config = SiteConfig::instance();
+
+        // Ensure relations are available for horse IDs and details used by the UI
+        $timeslot->loadMissing('horses:id,name,breed,photo_path');
+
         return Inertia::render('timeslots/EditTimeslot', [
-            'timeslot' => $timeslot->only([
-                'id', 'title', 'description', 'start_at', 'end_at', 'capacity', 'is_group', 'price', 'service_name', 'trainer_name', 'location_id',
-            ]),
+            'timeslot' => [
+                'id' => $timeslot->id,
+                'title' => $timeslot->title,
+                'description' => $timeslot->description,
+                'start_at' => $timeslot->start_at?->toIso8601String(),
+                'end_at' => $timeslot->end_at?->toIso8601String(),
+                'capacity' => $timeslot->capacity,
+                'is_group' => (bool) $timeslot->is_group,
+                'price' => $timeslot->price,
+                'service_name' => $timeslot->service_name,
+                'trainer_name' => $timeslot->trainer_name,
+                'location_id' => $timeslot->location_id,
+                'horse_ids' => $timeslot->horses->pluck('id')->values(),
+                'horses' => $timeslot->horses->map(function ($h) {
+                    return [
+                        'id' => $h->id,
+                        'name' => $h->name,
+                        'breed' => $h->breed,
+                        'photo_url' => $h->photo_url,
+                    ];
+                })->values(),
+            ],
+            'warnings' => [
+                'trainers' => (bool) $config->warn_overbook_trainers,
+                'horses' => (bool) $config->warn_overbook_horses,
+                'timeslots' => (bool) $config->warn_overbook_timeslots,
+            ],
         ]);
     }
 
@@ -124,7 +153,13 @@ class TimeslotController extends Controller
         $data['is_group'] = (bool) ($data['is_group'] ?? false);
         $data['price'] = $data['price'] ?? 0;
 
-        $timeslot->update($data);
+        $horseIds = (array) ($data['horse_ids'] ?? []);
+        unset($data['horse_ids']);
+
+        DB::transaction(function () use ($timeslot, $data, $horseIds) {
+            $timeslot->update($data);
+            $timeslot->horses()->sync(array_values(array_unique($horseIds)));
+        });
 
         return redirect()->route('dashboard.timeslots')->with('success', 'Timeslot updated.');
     }
