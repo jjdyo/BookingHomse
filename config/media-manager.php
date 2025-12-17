@@ -46,6 +46,6 @@ return [
     'permissions' => [
         'logos' => ['admin', 'marketing'],
         'trainers' => [],
-        '*' => ['admin'],
+        '*' => [],
     ],
 ];

@@ -2,12 +2,14 @@
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import HorseCardChip from '@/components/horses/HorseCardChip.vue';
 
 type Horse = {
   id: number;
   name: string;
   breed?: string | null;
   photo_url?: string | null;
+  notes?: string | null;
 };
 
 interface Props {
@@ -130,25 +132,12 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside));
   <div ref="rootEl" class="w-full">
     <Label :for="props.inputId">{{ props.label }}</Label>
     <div class="mt-1">
-      <div class="flex flex-wrap gap-2 mb-2">
+      <div class="flex flex-wrap gap-3 mb-3">
         <template v-for="id in selected" :key="id">
-          <span class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 border border-blue-200">
-            <img
-              v-if="selectedMap[id]?.photo_url"
-              :src="selectedMap[id]?.photo_url as string"
-              alt=""
-              class="h-5 w-5 rounded-full object-cover"
-            />
-            <span class="truncate max-w-[12rem]">
-              {{ selectedMap[id]?.name ?? `#${id}` }}
-              <span v-if="selectedMap[id]?.breed" class="text-blue-600/70">
-                · {{ selectedMap[id]?.breed }}
-              </span>
-            </span>
-            <button type="button" class="ml-1 text-blue-700 hover:text-blue-900" @click="removeHorse(id)" aria-label="Remove">
-              ×
-            </button>
-          </span>
+          <HorseCardChip
+            :horse="selectedMap[id] ?? { id, name: `Horse #${id}` }"
+            @remove="removeHorse"
+          />
         </template>
         <span v-if="!selected.length" class="text-sm text-muted-foreground">No horses selected</span>
       </div>
@@ -173,14 +162,14 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside));
             :class="idx === highlightedIndex ? 'bg-gray-50' : ''"
             @click="addHorse(h)"
           >
-            <img v-if="h.photo_url" :src="h.photo_url" alt="" class="h-6 w-6 rounded-full object-cover" />
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between">
+            <img v-if="h.photo_url" :src="h.photo_url" :alt="h.name" class="h-8 w-8 rounded-md object-cover" />
+            <span class="flex-1 min-w-0">
+              <span class="flex items-center justify-between gap-3">
                 <span class="font-medium truncate">{{ h.name }}</span>
                 <span class="text-xs text-muted-foreground">#{{ h.id }}</span>
-              </div>
-              <div v-if="h.breed" class="text-xs text-muted-foreground truncate">{{ h.breed }}</div>
-            </div>
+              </span>
+              <span v-if="h.breed" class="block text-xs text-muted-foreground truncate">{{ h.breed }}</span>
+            </span>
           </button>
           <div v-if="!loading && results.length === 0" class="px-3 py-2 text-sm text-muted-foreground">No matches</div>
         </div>
