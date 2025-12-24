@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Timeslots;
 
+use App\Models\Location;
 use App\Models\Timeslot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,6 +16,8 @@ class TimeslotsFeedTest extends TestCase
         $start = now()->addDay()->startOfHour();
         $end = (clone $start)->addHour();
 
+        $loc = Location::factory()->create(['name' => 'Arena A', 'description' => 'Main arena', 'address' => '123 Farm Rd']);
+
         $slot = Timeslot::create([
             'title' => 'Lesson',
             'description' => 'Intro ride',
@@ -24,6 +27,7 @@ class TimeslotsFeedTest extends TestCase
             'price' => 45.50,
             'service_name' => 'Private Lesson',
             'trainer_name' => 'Alex',
+            'location_id' => $loc->id,
         ]);
 
         // FullCalendar passes ISO8601 with timezone; our controller compares strings, so use exact window that overlaps
@@ -44,5 +48,7 @@ class TimeslotsFeedTest extends TestCase
         $this->assertEquals(45.50, $first['extendedProps']['price']);
         $this->assertSame('Private Lesson', $first['extendedProps']['service_name']);
         $this->assertSame('Alex', $first['extendedProps']['trainer_name']);
+        $this->assertSame('Arena A', $first['extendedProps']['location_name']);
+        $this->assertSame('123 Farm Rd', $first['extendedProps']['location_address']);
     }
 }

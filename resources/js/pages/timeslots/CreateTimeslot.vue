@@ -10,6 +10,7 @@ import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
 import { ref, computed, onMounted, watch } from 'vue';
 import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
+import LocationTypeahead from '@/components/LocationTypeahead.vue';
 
 type FormData = {
     title: string;
@@ -20,6 +21,7 @@ type FormData = {
     price: number | null;
     service_name: string | null;
     trainer_name: string | null;
+    location_id: number | null;
     horse_ids: number[];
     color: string | null;
 };
@@ -33,6 +35,7 @@ const form = useForm<FormData>({
     price: 0,
     service_name: null,
     trainer_name: null,
+    location_id: null,
     horse_ids: [],
     color: '#3B82F6',
 });
@@ -132,13 +135,16 @@ async function checkConflicts(): Promise<boolean> {
         });
         if (!res.ok) {
             const text = await res.text();
-            throw new Error(`Conflict check failed: ${res.status} ${res.statusText} ${text ?? ''}`);
+            console.error('Conflict check failed', res.status, res.statusText, text);
+            conflictCheckError.value = 'Unable to run conflict warnings at the moment. Please try again, or save only if you are sure.';
+            conflicts.value = { timeslots: [], trainers: [], horses: [] };
+            return false;
         }
         const data = await res.json();
         conflicts.value = data?.conflicts ?? { timeslots: [], trainers: [], horses: [] };
         return hasAnyRelevantConflicts.value;
     } catch (e) {
-        // If conflict check fails, do not block saving; proceed without modal.
+        // If conflict check fails, do not auto‑proceed; require explicit user action
         console.error('Conflict check error', e);
         conflictCheckError.value = 'Unable to run conflict warnings at the moment. Please try again, or save only if you are sure.';
         conflicts.value = { timeslots: [], trainers: [], horses: [] };
@@ -517,6 +523,16 @@ function submitAnyway() {
                 </div>
 
                 <div class="grid gap-2">
+                    <LocationTypeahead
+                        input-id="location_id"
+                        label="Location (optional)"
+                        placeholder="Type to search locations"
+                        v-model="form.location_id"
+                    />
+                    <InputError :message="(form.errors as any).location_id" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="color">Color (optional)</Label>
                     <input id="color" name="color" type="color" v-model="(form as any).color" class="h-10 w-24 cursor-pointer rounded-md border p-1" />
                     <p class="text-xs text-muted-foreground">Choose an event color for calendars. Defaults to blue if left empty.</p>
@@ -551,13 +567,4 @@ function submitAnyway() {
 </template>
 
 <style>
-/* Subtle pulsing highlight for the draft preview event on the calendar */
-.bh-draft-preview {
-  animation: bh-draft-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes bh-draft-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35); }
-  50% { box-shadow: 0 0 0 30px rgba(34, 197, 94, 0.0); }
-}
 </style>

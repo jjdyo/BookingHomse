@@ -13,8 +13,13 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            // Simple label that can be an address or description
-            $table->string('label');
+            $table->string('name')->unique();
+            $table->string('slug')->nullable()->unique();
+            $table->text('description');
+            $table->text('address')->nullable();
+            $table->text('notes')->nullable();
+            $table->string('photo_path')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

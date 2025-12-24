@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HorseController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\TimeslotController;
 use App\Http\Controllers\TimeslotPresetController;
@@ -76,6 +77,22 @@ Route::middleware(['auth'])->group(function () {
     // Trainers search (typeahead)
     Route::get('/trainers/search', [TrainerController::class, 'search'])
         ->name('trainers.search');
+
+    // Locations
+    Route::get('/dashboard/locations', [LocationController::class, 'index'])
+        ->name('dashboard.locations');
+    Route::get('/dashboard/locations/create', [LocationController::class, 'create'])
+        ->name('dashboard.locations.create');
+    Route::get('/dashboard/locations/{location}/edit', [LocationController::class, 'edit'])
+        ->name('dashboard.locations.edit');
+    Route::post('/locations', [LocationController::class, 'store'])
+        ->name('locations.store');
+    Route::put('/locations/{location}', [LocationController::class, 'update'])
+        ->name('locations.update');
+    Route::delete('/locations/{location}', [LocationController::class, 'destroy'])
+        ->name('locations.destroy');
+    // Locations search (typeahead)
+    Route::get('/locations/search', [LocationController::class, 'search'])->name('locations.search');
 
     // Bookings — edit/update (URL retained under bookings for per-booking editing)
     Route::get('/dashboard/bookings/{booking}/edit', [BookingController::class, 'edit'])

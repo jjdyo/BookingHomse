@@ -10,6 +10,7 @@ return [
         'logos' => ['label' => 'Brand Logos'],
         'trainers' => ['label' => 'Trainer Media'],
         'horses' => ['label' => 'Horse Media'],
+        'locations' => ['label' => 'Location Media'],
         'timeslots' => ['label' => 'Timeslot Media'],
         'misc' => ['label' => 'Miscellaneous'],
     ],
@@ -46,6 +47,7 @@ return [
     'permissions' => [
         'logos' => ['admin', 'marketing'],
         'trainers' => [],
+        'locations' => [],
         '*' => [],
     ],
 ];

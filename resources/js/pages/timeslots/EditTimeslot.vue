@@ -9,6 +9,7 @@ import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
+import LocationTypeahead from '@/components/LocationTypeahead.vue';
 
 type Timeslot = {
   id: number;
@@ -166,6 +167,16 @@ const breadcrumbs: BreadcrumbItem[] = [
             />
             <InputError :message="form.errors.trainer_name" />
           </div>
+        </div>
+
+        <div class="grid gap-2">
+          <LocationTypeahead
+            input-id="location_id"
+            label="Location (optional)"
+            placeholder="Type to search locations"
+            v-model="(form.location_id as any)"
+          />
+          <InputError :message="(form.errors as any).location_id" />
         </div>
 
         <div class="grid gap-2">
