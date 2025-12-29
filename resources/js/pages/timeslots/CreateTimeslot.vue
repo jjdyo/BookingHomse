@@ -236,8 +236,7 @@ function getDraftEvent() {
         display: 'block',
         backgroundColor: color,
         borderColor: color,
-        // Add a CSS class for a subtle pulse animation
-        classNames: ['bh-draft-preview'],
+        classNames: ['bh-draft-preview', 'animate-pulse'],
         editable: false,
     } as any;
 }
