@@ -8,7 +8,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
 import { ref, computed, onMounted, watch } from 'vue';
-import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
+import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import LocationTypeahead from '@/components/LocationTypeahead.vue';
 
@@ -20,7 +20,7 @@ type FormData = {
     capacity: number | null;
     price: number | null;
     service_name: string | null;
-    trainer_name: string | null;
+    trainer_ids: number[];
     location_id: number | null;
     horse_ids: number[];
     color: string | null;
@@ -34,7 +34,7 @@ const form = useForm<FormData>({
     capacity: 1,
     price: 0,
     service_name: null,
-    trainer_name: null,
+    trainer_ids: [],
     location_id: null,
     horse_ids: [],
     color: '#3B82F6',
@@ -116,7 +116,7 @@ async function checkConflicts(): Promise<boolean> {
         const payload = {
             start_at: toIso((form as any).start_at as unknown as string),
             end_at: toIso((form as any).end_at as unknown as string),
-            trainer_name: (form as any).trainer_name,
+            trainer_ids: (form as any).trainer_ids,
             horse_ids: (form as any).horse_ids,
         } as any;
 
@@ -190,7 +190,7 @@ const selected = ref<null | {
     end: string;
     capacity?: number;
     price?: number | string;
-    trainer_name?: string | null;
+    trainer_label?: string | null;
     service_name?: string | null;
 }>(null);
 
@@ -204,7 +204,7 @@ function onEventClick(arg: EventClickArg) {
         end: e.end?.toISOString?.() ?? e.endStr,
         capacity: e.extendedProps?.capacity,
         price: e.extendedProps?.price,
-        trainer_name: e.extendedProps?.trainer_name,
+        trainer_label: e.extendedProps?.trainer_label,
         service_name: e.extendedProps?.service_name,
     };
 }
@@ -279,7 +279,7 @@ async function tryPrefillFromPreset() {
         (form as any).capacity = data.capacity ?? 1;
         (form as any).price = data.price ?? 0;
         (form as any).service_name = data.service_name ?? null;
-        (form as any).trainer_name = data.trainer_name ?? null;
+        (form as any).trainer_ids = Array.isArray(data.trainer_ids) ? data.trainer_ids : [];
         (form as any).horse_ids = Array.isArray(data.horse_ids) ? data.horse_ids : [];
         (form as any).color = data.color ?? null;
         presetInitialHorses.value = Array.isArray(data.horses) ? data.horses : [];
@@ -334,7 +334,7 @@ function submitAnyway() {
                 <div class="relative z-10 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
                     <h2 class="text-xl font-semibold">{{ selected?.title }}</h2>
                     <p v-if="selected?.service_name" class="mt-1 text-sm text-muted-foreground">Service: {{ selected?.service_name }}</p>
-                    <p v-if="selected?.trainer_name" class="text-sm text-muted-foreground">Trainer: {{ selected?.trainer_name }}</p>
+                    <p v-if="selected?.trainer_label" class="text-sm text-muted-foreground">Trainers: {{ selected?.trainer_label }}</p>
                     <div class="mt-3 space-y-1 text-sm">
                         <div>
                             <span class="font-medium">Starts:</span>
@@ -399,8 +399,8 @@ function submitAnyway() {
                                         <span class="font-medium">{{ toLocal(t.end_at) }}</span>
                                         — your timeslot <span class="font-medium">{{ describeOverlap(currentStart as any, currentEnd as any, t.start_at, t.end_at) }}</span> this.
                                     </div>
-                                    <div v-if="t.trainer_name" class="mt-1 text-muted-foreground">
-                                        <span class="font-medium">Trainer:</span> {{ t.trainer_name }}
+                                    <div v-if="t.trainer_names && t.trainer_names.length" class="mt-1 text-muted-foreground">
+                                        <span class="font-medium">Trainers:</span> {{ (t.trainer_names || []).join(', ') }}
                                     </div>
                                     <div v-if="t.service_name" class="text-muted-foreground">
                                         <span class="font-medium">Service:</span> {{ t.service_name }}
@@ -413,10 +413,8 @@ function submitAnyway() {
                             <h3 class="font-medium">Trainer Overlaps ({{ conflicts.trainers.length }})</h3>
                             <div class="mt-2 grid gap-2">
                                 <div v-for="t in conflicts.trainers" :key="'tr-' + t.id" class="rounded-md border bg-white p-3 text-sm shadow-sm">
-                                    <div>
-                                        Trainer <span class="font-medium">{{ t.trainer_name || 'Unknown' }}</span>
-                                        is already booked in “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”.
-                                    </div>
+                                    <div class="font-medium">Trainer conflict in “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”.</div>
+                                    <div v-if="t.trainers && t.trainers.length" class="text-sm text-muted-foreground">Trainers: {{ t.trainers.map((x: any) => x.name).join(', ') }}</div>
                                     <div class="mt-1 text-muted-foreground">
                                         <span class="font-medium">{{ toLocal(t.start_at) }}</span>
                                         →
@@ -510,14 +508,13 @@ function submitAnyway() {
                         <InputError :message="form.errors.service_name" />
                     </div>
                     <div class="grid gap-2">
-                        <TrainerTypeahead
-                            input-id="trainer_name"
-                            label="Trainer (optional)"
-                            placeholder="Type to search trainers or enter a new name"
-                            v-model="form.trainer_name"
-                            @select="(t) => (form.trainer_name = t.name)"
+                        <TrainerMultiTypeahead
+                            input-id="trainer_ids"
+                            label="Trainers (optional)"
+                            placeholder="Type to search and add trainers"
+                            v-model="(form as any).trainer_ids"
                         />
-                        <InputError :message="form.errors.trainer_name" />
+                        <InputError :message="(form.errors as any)['trainer_ids.*']" />
                     </div>
                 </div>
 

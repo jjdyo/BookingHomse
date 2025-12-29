@@ -7,7 +7,7 @@ import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
-import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
+import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import LocationTypeahead from '@/components/LocationTypeahead.vue';
 
@@ -21,7 +21,8 @@ type Timeslot = {
   is_group: boolean;
   price: number | string | null;
   service_name: string | null;
-  trainer_name: string | null;
+  trainer_ids: number[];
+  trainers?: { id: number; name: string; title?: string | null; photo_url?: string | null }[];
   location_id: number | null;
   horse_ids: number[];
   horses?: { id: number; name: string; breed?: string | null; photo_url?: string | null }[];
@@ -47,7 +48,21 @@ function toInputDateTime(value: string | Date | null | undefined): string {
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }
 
-const form = useForm<Pick<Timeslot, 'title' | 'description' | 'start_at' | 'end_at' | 'capacity' | 'is_group' | 'price' | 'service_name' | 'trainer_name' | 'location_id' | 'horse_ids'>>({
+type FormData = {
+  title: string;
+  description: string;
+  start_at: string;
+  end_at: string;
+  capacity: number | null;
+  is_group: boolean;
+  price: number | string | null;
+  service_name: string | null;
+  trainer_ids: number[];
+  location_id: number | null;
+  horse_ids: number[];
+};
+
+const form = useForm<FormData>({
   title: props.timeslot.title ?? '',
   description: props.timeslot.description ?? '',
   start_at: toInputDateTime(props.timeslot.start_at),
@@ -56,7 +71,7 @@ const form = useForm<Pick<Timeslot, 'title' | 'description' | 'start_at' | 'end_
   is_group: props.timeslot.is_group,
   price: props.timeslot.price ?? 0,
   service_name: props.timeslot.service_name ?? null,
-  trainer_name: props.timeslot.trainer_name ?? null,
+  trainer_ids: Array.isArray(props.timeslot.trainer_ids) ? [...props.timeslot.trainer_ids] : [],
   location_id: props.timeslot.location_id ?? null,
   horse_ids: Array.isArray(props.timeslot.horse_ids) ? [...props.timeslot.horse_ids] : [],
 });
@@ -94,7 +109,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 <template>
   <Head :title="`Edit Timeslot — ${props.timeslot.title}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <section class="mx-auto max-w-2xl p-6">
+    <section class="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:max-w-5xl lg:px-8">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-semibold">Edit Timeslot</h1>
         <a href="/dashboard/timeslots" class="text-sm text-blue-600 hover:underline">Back to Timeslots</a>
@@ -157,17 +172,19 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Input id="service_name" name="service_name" v-model="(form.service_name as any)" placeholder="e.g., Beginner Lesson" />
             <InputError :message="form.errors.service_name" />
           </div>
-          <div class="grid gap-2">
-            <TrainerTypeahead
-              input-id="trainer_name"
-              label="Trainer (label)"
-              placeholder="Type to search trainers or enter a new name"
-              v-model="(form.trainer_name as any)"
-              @select="(t) => (form.trainer_name = t.name as any)"
-            />
-            <InputError :message="form.errors.trainer_name" />
-          </div>
         </div>
+
+          <div class="grid gap-2">
+              <TrainerMultiTypeahead
+                  input-id="trainer_ids"
+                  label="Trainers (optional)"
+                  placeholder="Type to search and add trainers"
+                  v-model="(form.trainer_ids as any)"
+                  :initial="(props.timeslot.trainers as any) || []"
+              />
+              <p class="text-xs text-muted-foreground">Selected trainers will be linked to this timeslot and considered for booking rules.</p>
+              <InputError :message="(form.errors as any)['trainer_ids.*']" />
+          </div>
 
         <div class="grid gap-2">
           <LocationTypeahead

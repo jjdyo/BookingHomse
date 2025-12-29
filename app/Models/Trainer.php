@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Trainer extends Model
 {
@@ -41,5 +42,21 @@ class Trainer extends Model
     public function scopeBookable($query)
     {
         return $query->where('is_bookable', true);
+    }
+
+    /**
+     * Accessor: full URL to the trainer's photo, if set.
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (! $this->photo_path) {
+            return null;
+        }
+
+        try {
+            return Storage::url($this->photo_path);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

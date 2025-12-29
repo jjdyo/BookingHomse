@@ -19,6 +19,7 @@ class TimeslotPreset extends Model
         'capacity',
         'is_group',
         'price',
+        // Deprecated single-trainer fields retained for backward-compat reads only
         'trainer_id',
         'trainer_name',
         'service_name',
@@ -39,5 +40,10 @@ class TimeslotPreset extends Model
     public function horses(): BelongsToMany
     {
         return $this->belongsToMany(Horse::class, 'timeslot_preset_horse');
+    }
+
+    public function trainers(): BelongsToMany
+    {
+        return $this->belongsToMany(Trainer::class, 'timeslot_preset_trainer');
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Timeslots;
 
 use App\Models\Horse;
 use App\Models\Timeslot;
+use App\Models\Trainer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -29,8 +30,9 @@ class TimeslotConflictsTest extends TestCase
         $existing = Timeslot::factory()->create([
             'start_at' => Carbon::parse('2025-12-20 10:00:00'),
             'end_at' => Carbon::parse('2025-12-20 11:00:00'),
-            'trainer_name' => 'Sam Coach',
         ]);
+        $tr = Trainer::factory()->create(['name' => 'Sam Coach']);
+        $existing->trainers()->sync([$tr->id]);
 
         // New proposal: 10:30 - 11:30 (overlaps)
         $payload = [
@@ -69,20 +71,21 @@ class TimeslotConflictsTest extends TestCase
             );
     }
 
-    public function test_trainer_conflict_requires_direct_match(): void
+    public function test_trainer_conflict_detects_any_selected_trainer(): void
     {
         $this->actingUser();
 
-        Timeslot::factory()->create([
+        $slot = Timeslot::factory()->create([
             'start_at' => Carbon::parse('2025-12-22 10:00:00'),
             'end_at' => Carbon::parse('2025-12-22 11:00:00'),
-            'trainer_name' => 'Alex Doe',
         ]);
+        $trainer = Trainer::factory()->create(['name' => 'Alex Doe']);
+        $slot->trainers()->sync([$trainer->id]);
 
         $payload = [
             'start_at' => '2025-12-22T10:30:00Z',
             'end_at' => '2025-12-22T11:30:00Z',
-            'trainer_name' => 'Alex Doe', // direct match required
+            'trainer_ids' => [$trainer->id],
         ];
 
         $this->postJson('/timeslots/check-conflicts', $payload)
@@ -92,21 +95,22 @@ class TimeslotConflictsTest extends TestCase
             );
     }
 
-    public function test_trainer_conflict_does_not_match_when_case_or_whitespace_differs(): void
+    public function test_trainer_conflict_ignores_when_no_selected_trainers_overlap(): void
     {
         $this->actingUser();
 
-        Timeslot::factory()->create([
+        $slot = Timeslot::factory()->create([
             'start_at' => Carbon::parse('2025-12-24 10:00:00'),
             'end_at' => Carbon::parse('2025-12-24 11:00:00'),
-            'trainer_name' => 'Alex Doe',
         ]);
+        $trainer = Trainer::factory()->create(['name' => 'Alex Doe']);
+        $slot->trainers()->sync([$trainer->id]);
 
-        // Different case and extra spaces should NOT match per requirement
+        // Selecting a completely different trainer should not conflict
         $payload = [
             'start_at' => '2025-12-24T10:30:00Z',
             'end_at' => '2025-12-24T11:30:00Z',
-            'trainer_name' => '  alex   doe  ',
+            'trainer_ids' => [Trainer::factory()->create(['name' => 'Different'])->id],
         ];
 
         $this->postJson('/timeslots/check-conflicts', $payload)
@@ -122,22 +126,23 @@ class TimeslotConflictsTest extends TestCase
         $this->actingUser();
 
         // Two existing overlapping timeslots in the window with same trainer
-        Timeslot::factory()->create([
+        $trainer = Trainer::factory()->create(['name' => 'Test']);
+        $s1 = Timeslot::factory()->create([
             'start_at' => Carbon::parse('2025-12-26 09:00:00'),
             'end_at' => Carbon::parse('2025-12-26 10:30:00'),
-            'trainer_name' => 'Test',
         ]);
-        Timeslot::factory()->create([
+        $s1->trainers()->sync([$trainer->id]);
+        $s2 = Timeslot::factory()->create([
             'start_at' => Carbon::parse('2025-12-26 10:00:00'),
             'end_at' => Carbon::parse('2025-12-26 11:00:00'),
-            'trainer_name' => 'Test',
         ]);
+        $s2->trainers()->sync([$trainer->id]);
 
         // New proposal that overlaps both: 10:15-10:45
         $payload = [
             'start_at' => '2025-12-26T10:15:00Z',
             'end_at' => '2025-12-26T10:45:00Z',
-            'trainer_name' => 'Test',
+            'trainer_ids' => [$trainer->id],
         ];
 
         $this->postJson('/timeslots/check-conflicts', $payload)
@@ -153,17 +158,18 @@ class TimeslotConflictsTest extends TestCase
         $this->actingUser();
 
         // Existing crosses midnight: 23:30 -> 01:00
-        Timeslot::factory()->create([
+        $trainer = Trainer::factory()->create(['name' => 'Night Coach']);
+        $s = Timeslot::factory()->create([
             'start_at' => Carbon::parse('2025-12-27 23:30:00'),
             'end_at' => Carbon::parse('2025-12-28 01:00:00'),
-            'trainer_name' => 'Night Coach',
         ]);
+        $s->trainers()->sync([$trainer->id]);
 
         // New: 00:30 -> 02:00 overlaps
         $payload = [
             'start_at' => '2025-12-28T00:30:00Z',
             'end_at' => '2025-12-28T02:00:00Z',
-            'trainer_name' => 'Night Coach',
+            'trainer_ids' => [$trainer->id],
         ];
 
         $this->postJson('/timeslots/check-conflicts', $payload)

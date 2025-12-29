@@ -43,7 +43,12 @@ class TimeslotController extends Controller
             }
         }
 
-        $slots = $query->with('location')->orderBy('start_at')->get();
+        $slots = $query->with([
+            'location',
+            'trainers' => function ($q) {
+                $q->select('trainers.id', 'trainers.name');
+            },
+        ])->orderBy('start_at')->get();
 
         return $slots->map(function (Timeslot $t) {
             $color = $t->color ?: '#3B82F6';
@@ -60,7 +65,9 @@ class TimeslotController extends Controller
                     'capacity' => $t->capacity,
                     'price' => $t->price,
                     'service_name' => $t->service_name,
-                    'trainer_name' => $t->trainer_name,
+                    // Multi-trainer support
+                    'trainer_names' => $t->trainers->pluck('name')->values(),
+                    'trainer_label' => $t->trainers->pluck('name')->implode(', '),
                     'location_name' => optional($t->location)->name,
                     'location_address' => optional($t->location)->address,
                     'color' => $t->color,
@@ -92,13 +99,18 @@ class TimeslotController extends Controller
         $data['created_by'] = Auth::id();
 
         $horseIds = (array) ($data['horse_ids'] ?? []);
+        $trainerIds = (array) ($data['trainer_ids'] ?? []);
         unset($data['horse_ids']);
+        unset($data['trainer_ids']);
 
         $timeslot = null;
-        DB::transaction(function () use (&$timeslot, $data, $horseIds) {
+        DB::transaction(function () use (&$timeslot, $data, $horseIds, $trainerIds) {
             $timeslot = Timeslot::create($data);
             if (! empty($horseIds)) {
                 $timeslot->horses()->sync(array_values(array_unique($horseIds)));
+            }
+            if (! empty($trainerIds)) {
+                $timeslot->trainers()->sync(array_values(array_unique($trainerIds)));
             }
         });
 
@@ -107,7 +119,7 @@ class TimeslotController extends Controller
             'title' => optional($timeslot)->title,
             'start_at' => optional($timeslot?->start_at)->toIso8601String(),
             'end_at' => optional($timeslot?->end_at)->toIso8601String(),
-            'trainer_name' => optional($timeslot)->trainer_name,
+            'trainer_ids_count' => count($trainerIds),
             'horse_ids_count' => count($horseIds),
         ]);
 
@@ -118,8 +130,13 @@ class TimeslotController extends Controller
     {
         $config = SiteConfig::instance();
 
-        // Ensure relations are available for horse IDs and details used by the UI
+        // Ensure relations are available for horse and trainer details used by the UI
         $timeslot->loadMissing('horses:id,name,breed,photo_path');
+        $timeslot->loadMissing(['trainers' => function ($q) {
+            // Provide fields for TrainerMultiTypeahead cards
+            // Qualify columns to avoid ambiguous names on SQLite
+            $q->select('trainers.id', 'trainers.name', 'trainers.title', 'trainers.photo_path');
+        }]);
 
         return Inertia::render('timeslots/EditTimeslot', [
             'timeslot' => [
@@ -132,7 +149,13 @@ class TimeslotController extends Controller
                 'is_group' => (bool) $timeslot->is_group,
                 'price' => $timeslot->price,
                 'service_name' => $timeslot->service_name,
-                'trainer_name' => $timeslot->trainer_name,
+                'trainer_ids' => $timeslot->trainers->pluck('id')->values(),
+                'trainers' => $timeslot->trainers->map(fn ($tr) => [
+                    'id' => $tr->id,
+                    'name' => $tr->name,
+                    'title' => $tr->title,
+                    'photo_url' => $tr->photo_url ?? null,
+                ])->values(),
                 'location_id' => $timeslot->location_id,
                 'horse_ids' => $timeslot->horses->pluck('id')->values(),
                 'horses' => $timeslot->horses->map(function ($h) {
@@ -161,11 +184,14 @@ class TimeslotController extends Controller
         $data['price'] = $data['price'] ?? 0;
 
         $horseIds = (array) ($data['horse_ids'] ?? []);
+        $trainerIds = (array) ($data['trainer_ids'] ?? []);
         unset($data['horse_ids']);
+        unset($data['trainer_ids']);
 
-        DB::transaction(function () use ($timeslot, $data, $horseIds) {
+        DB::transaction(function () use ($timeslot, $data, $horseIds, $trainerIds) {
             $timeslot->update($data);
             $timeslot->horses()->sync(array_values(array_unique($horseIds)));
+            $timeslot->trainers()->sync(array_values(array_unique($trainerIds)));
         });
 
         return redirect()->route('dashboard.timeslots')->with('success', 'Timeslot updated.');
@@ -187,7 +213,7 @@ class TimeslotController extends Controller
 
     /**
      * Pre-submit conflicts check for timeslot creation.
-     * Accepts: title, start_at, end_at, optional trainer_name, optional horse_ids[]
+     * Accepts: title, start_at, end_at, optional trainer_ids[], optional horse_ids[]
      * Returns: { conflicts: { timeslots: [...], trainers: [...], horses: [...] } }
      */
     public function checkConflicts(Request $request)
@@ -195,7 +221,8 @@ class TimeslotController extends Controller
         $request->validate([
             'start_at' => ['required', 'date'],
             'end_at' => ['required', 'date', 'after:start_at'],
-            'trainer_name' => ['nullable', 'string', 'max:255'],
+            'trainer_ids' => ['nullable', 'array'],
+            'trainer_ids.*' => ['integer', 'exists:trainers,id'],
             'horse_ids' => ['nullable', 'array'],
             'horse_ids.*' => ['integer', 'exists:horses,id'],
             // Optional: when editing an existing timeslot, exclude it from overlap set
@@ -204,14 +231,14 @@ class TimeslotController extends Controller
 
         $start = Carbon::parse($request->input('start_at'));
         $end = Carbon::parse($request->input('end_at'));
-        $trainerName = $request->input('trainer_name');
+        $trainerIds = (array) $request->input('trainer_ids', []);
         $horseIds = (array) $request->input('horse_ids', []);
         $excludeId = $request->input('exclude_id');
 
         Log::info('Timeslot conflicts check: request', [
             'start_at' => $start?->toIso8601String(),
             'end_at' => $end?->toIso8601String(),
-            'trainer_name' => $trainerName,
+            'trainer_ids_count' => count($trainerIds),
             'horse_ids_count' => count($horseIds),
             'exclude_id' => $excludeId,
         ]);
@@ -221,7 +248,10 @@ class TimeslotController extends Controller
             ->where('start_at', '<', $end)
             ->where('end_at', '>', $start)
             ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
-            ->orderBy('start_at');
+            ->orderBy('start_at')
+            ->with(['trainers' => function ($q) {
+                $q->select('trainers.id', 'trainers.name');
+            }]);
 
         $overlapping = $overlappingQuery->get();
 
@@ -230,23 +260,34 @@ class TimeslotController extends Controller
             'title' => $t->title,
             'start_at' => $t->start_at->toIso8601String(),
             'end_at' => $t->end_at->toIso8601String(),
-            'trainer_name' => $t->trainer_name,
+            'trainer_names' => $t->trainers->pluck('name')->values(),
             'service_name' => $t->service_name,
         ]);
 
         $trainerConflicts = collect();
-        if ($trainerName !== null && $trainerName !== '') {
-            // Direct string equality match per requirements; typeahead is expected to normalize input
-            $trainerConflicts = $overlapping->filter(function (Timeslot $t) use ($trainerName) {
-                return $t->trainer_name !== null && $t->trainer_name === $trainerName;
-            })->values()->map(fn (Timeslot $t) => [
-                'id' => $t->id,
-                'title' => $t->title,
-                'start_at' => $t->start_at->toIso8601String(),
-                'end_at' => $t->end_at->toIso8601String(),
-                'trainer_name' => $t->trainer_name,
-                'service_name' => $t->service_name,
-            ]);
+        if (! empty($trainerIds)) {
+            $trainerOverlaps = Timeslot::query()
+                ->where('start_at', '<', $end)
+                ->where('end_at', '>', $start)
+                ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+                ->whereHas('trainers', function ($q) use ($trainerIds) {
+                    $q->whereIn('trainers.id', $trainerIds);
+                })
+                ->with(['trainers' => function ($q) use ($trainerIds) {
+                    $q->whereIn('trainers.id', $trainerIds)->select('trainers.id', 'trainers.name');
+                }])
+                ->get();
+
+            $trainerConflicts = $trainerOverlaps->map(function (Timeslot $t) {
+                return [
+                    'id' => $t->id,
+                    'title' => $t->title,
+                    'start_at' => $t->start_at->toIso8601String(),
+                    'end_at' => $t->end_at->toIso8601String(),
+                    'service_name' => $t->service_name,
+                    'trainers' => $t->trainers->map(fn ($tr) => ['id' => $tr->id, 'name' => $tr->name])->values(),
+                ];
+            });
         }
 
         $horseConflicts = collect();
@@ -294,7 +335,6 @@ class TimeslotController extends Controller
                 'start' => $start?->toIso8601String(),
                 'end' => $end?->toIso8601String(),
             ],
-            'trainer_name' => $trainerName,
         ]);
 
         return response()->json($payload);
