@@ -59,5 +59,24 @@ class DemoSiteSeederTest extends TestCase
                 $this->assertTrue(Storage::disk('public')->exists($someLocation->photo_path));
             }
         }
+
+        // New guarantees: every timeslot has all core fields and attached entities for demo purposes
+        foreach (Timeslot::all() as $t) {
+            $this->assertNotNull($t->title);
+            $this->assertNotNull($t->description);
+            $this->assertNotNull($t->start_at);
+            $this->assertNotNull($t->end_at);
+            $this->assertNotNull($t->capacity);
+            $this->assertNotNull($t->price);
+            $this->assertNotNull($t->service_name);
+            $this->assertNotNull($t->location_id);
+
+            $trainerCount = $t->trainers()->count();
+            $horseCount = $t->horses()->count();
+            $this->assertGreaterThanOrEqual(1, $trainerCount);
+            $this->assertLessThanOrEqual(5, $trainerCount);
+            $this->assertGreaterThanOrEqual(1, $horseCount);
+            $this->assertLessThanOrEqual(5, $horseCount);
+        }
     }
 }

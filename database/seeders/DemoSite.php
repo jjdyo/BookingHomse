@@ -74,7 +74,6 @@ class DemoSite extends Seeder
 
         // Seed three guaranteed multi-day slots up front
         for ($i = 0; $i < 3; $i++) {
-            $trainer = $trainers->random();
             $location = $locations->random();
             $start = $now->copy()->addDays($i + 1)->hour(9)->minute(0)->second(0);
             $end = $start->copy()->addDays(3)->addHour();
@@ -86,16 +85,21 @@ class DemoSite extends Seeder
                 'capacity' => fake()->numberBetween(1, 8),
                 'is_group' => fake()->boolean(30),
                 'price' => fake()->randomFloat(2, 25, 200),
-                'trainer_name' => $trainer->name,
-                'service_name' => fake()->optional()->randomElement(['Beginner', 'Intermediate', 'Advanced', 'Trail']),
+                // Keep deprecated single-trainer label for legacy UIs, join of attached trainers will be set after attach
+                'trainer_name' => null,
+                'service_name' => fake()->randomElement(['Beginner', 'Intermediate', 'Advanced', 'Trail']),
                 'location_id' => $location->id,
                 'color' => fake()->optional()->randomElement($palette),
             ]);
-            // attach some horses
-            $attachCount = fake()->numberBetween(0, 3);
-            if ($attachCount > 0) {
-                $slot->horses()->sync($horses->random($attachCount)->pluck('id')->values()->all());
-            }
+            // Attach 1–5 trainers
+            $trainerAttach = $trainers->random(fake()->numberBetween(1, 5))->pluck('id')->values()->all();
+            $slot->trainers()->sync($trainerAttach);
+            // Back-compat label
+            $slot->update(['trainer_name' => Trainer::whereIn('id', $trainerAttach)->pluck('name')->implode(', ')]);
+
+            // Attach 1–5 horses
+            $horseAttach = $horses->random(fake()->numberBetween(1, 5))->pluck('id')->values()->all();
+            $slot->horses()->sync($horseAttach);
         }
 
         for ($i = 0; $i < $totalSlots; $i++) {
@@ -111,7 +115,6 @@ class DemoSite extends Seeder
                 $end = $start->copy()->addHours($durationHours);
             }
 
-            $trainer = $trainers->random();
             $location = $locations->random();
 
             $slot = Timeslot::create([
@@ -122,17 +125,21 @@ class DemoSite extends Seeder
                 'capacity' => fake()->numberBetween(1, 8),
                 'is_group' => fake()->boolean(30),
                 'price' => fake()->randomFloat(2, 25, 200),
-                'trainer_name' => $trainer->name,
-                'service_name' => fake()->optional()->randomElement(['Beginner', 'Intermediate', 'Advanced', 'Trail']),
+                'trainer_name' => null,
+                'service_name' => fake()->randomElement(['Beginner', 'Intermediate', 'Advanced', 'Trail']),
                 'location_id' => $location->id,
                 'color' => fake()->optional()->randomElement($palette),
             ]);
 
-            // Attach 0-3 horses to the timeslot
-            $attachCount = fake()->numberBetween(0, 3);
-            if ($attachCount > 0) {
-                $slot->horses()->sync($horses->random($attachCount)->pluck('id')->values()->all());
-            }
+            // Attach 1–5 trainers
+            $trainerAttach = $trainers->random(fake()->numberBetween(1, 5))->pluck('id')->values()->all();
+            $slot->trainers()->sync($trainerAttach);
+            // Back-compat label
+            $slot->update(['trainer_name' => Trainer::whereIn('id', $trainerAttach)->pluck('name')->implode(', ')]);
+
+            // Attach 1–5 horses to the timeslot
+            $horseAttach = $horses->random(fake()->numberBetween(1, 5))->pluck('id')->values()->all();
+            $slot->horses()->sync($horseAttach);
         }
 
         // Final safeguard: ensure at least 3 multi‑day timeslots exist

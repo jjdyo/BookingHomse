@@ -192,6 +192,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             label="Location (optional)"
             placeholder="Type to search locations"
             v-model="(form.location_id as any)"
+            :initialName="(props.timeslot as any).location_name || null"
           />
           <InputError :message="(form.errors as any).location_id" />
         </div>

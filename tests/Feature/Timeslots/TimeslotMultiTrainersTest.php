@@ -76,6 +76,10 @@ class TimeslotMultiTrainersTest extends TestCase
         $this->assertSame('Coach', $props['timeslot']['trainers'][0]['title']);
         // photo_url accessor should be present (may be absolute or storage URL)
         $this->assertArrayHasKey('photo_url', $props['timeslot']['trainers'][0]);
+
+        // location fields should be present for edit UI prefill
+        $this->assertArrayHasKey('location_id', $props['timeslot']);
+        $this->assertTrue(array_key_exists('location_name', $props['timeslot']));
     }
 
     public function test_update_timeslot_syncs_trainer_ids(): void

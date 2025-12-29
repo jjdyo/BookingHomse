@@ -137,6 +137,8 @@ class TimeslotController extends Controller
             // Qualify columns to avoid ambiguous names on SQLite
             $q->select('trainers.id', 'trainers.name', 'trainers.title', 'trainers.photo_path');
         }]);
+        // Also load location so we can provide the initial display name for the typeahead
+        $timeslot->loadMissing(['location:id,name']);
 
         return Inertia::render('timeslots/EditTimeslot', [
             'timeslot' => [
@@ -157,6 +159,7 @@ class TimeslotController extends Controller
                     'photo_url' => $tr->photo_url ?? null,
                 ])->values(),
                 'location_id' => $timeslot->location_id,
+                'location_name' => optional($timeslot->location)->name,
                 'horse_ids' => $timeslot->horses->pluck('id')->values(),
                 'horses' => $timeslot->horses->map(function ($h) {
                     return [

@@ -57,6 +57,15 @@ onMounted(() => {
   // Seed the input text when an initial name is provided (e.g., on edit forms)
   if (props.initialName && !query.value) {
     query.value = props.initialName;
+    // Prevent the autofill from triggering a search/dropdown open.
+    // We only want to search/open after the user types or explicitly interacts.
+    suppressNextSearch = true;
+    if (debounceTimer) {
+      window.clearTimeout(debounceTimer);
+    }
+    results.value = [];
+    open.value = false;
+    highlightedIndex.value = -1;
   }
 });
 
