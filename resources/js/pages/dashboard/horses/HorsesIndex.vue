@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import StatusChip from '@/components/StatusChip.vue';
 
 interface Horse {
     id: number;
@@ -76,14 +77,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 <p v-if="h.breed" class="text-sm text-muted-foreground">{{ h.breed }}</p>
                             </div>
                         </div>
-                        <span
-                            class="rounded-full px-2 py-1 text-xs"
-                            :class="h.is_bookable
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                                : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'"
-                        >
-                            {{ h.is_bookable ? 'Bookable' : 'Not bookable' }}
-                        </span>
+                        <StatusChip :value="h.is_bookable" true-label="Bookable" false-label="Not bookable" />
                     </div>
                     <p class="mt-3 line-clamp-3 text-sm text-muted-foreground">{{ h.description }}</p>
                     <p v-if="h.notes" class="mt-2 line-clamp-2 text-xs text-muted-foreground">Notes: {{ h.notes }}</p>
@@ -123,9 +117,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </td>
                             <td class="px-4 py-3">{{ h.breed || '—' }}</td>
                             <td class="px-4 py-3">
-                                <span :class="h.is_bookable ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">
-                                    {{ h.is_bookable ? 'Yes' : 'No' }}
-                                </span>
+                                <StatusChip :value="h.is_bookable" true-label="Yes" false-label="No" />
                             </td>
                             <td class="px-4 py-3">{{ h.description }}</td>
                             <td class="px-4 py-3">{{ h.notes || '—' }}</td>

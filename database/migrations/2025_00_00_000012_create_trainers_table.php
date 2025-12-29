@@ -14,9 +14,11 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->text('bio')->nullable();
             $table->string('photo_path')->nullable();
+            $table->boolean('is_bookable')->default(true);
             $table->timestamps();
 
             $table->index('name');
+            $table->index('is_bookable');
         });
     }
 

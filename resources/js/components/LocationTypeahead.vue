@@ -152,8 +152,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
       <div v-if="open" class="absolute z-10 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-lg">
         <ul class="max-h-64 overflow-auto py-1 text-sm">
           <li v-for="(item, idx) in results" :key="item.id">
-            <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground" :class="{ 'bg-accent text-accent-foreground': idx === highlightedIndex }" @mousedown.prevent="select(item)">
-              <span class="inline-block h-6 w-6 overflow-hidden rounded bg-muted"></span>
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground"
+              :class="{ 'bg-accent text-accent-foreground': idx === highlightedIndex }"
+              @mousedown.prevent="select(item)"
+            >
+              <span class="inline-block h-6 w-6 overflow-hidden rounded bg-muted ring-1 ring-muted">
+                <img v-if="item.photo_url" :src="item.photo_url" alt="" class="h-full w-full object-cover" loading="lazy" />
+              </span>
               <span class="truncate">{{ item.name }}</span>
             </button>
           </li>

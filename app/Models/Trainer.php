@@ -14,6 +14,7 @@ class Trainer extends Model
         'title',
         'bio',
         'photo_path',
+        'is_bookable',
     ];
 
     /**
@@ -22,5 +23,23 @@ class Trainer extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('name');
+    }
+
+    /**
+     * Casts for attributes.
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_bookable' => 'boolean',
+        ];
+    }
+
+    /**
+     * Scope: only trainers marked as bookable.
+     */
+    public function scopeBookable($query)
+    {
+        return $query->where('is_bookable', true);
     }
 }

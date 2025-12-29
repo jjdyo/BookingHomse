@@ -17,7 +17,7 @@ class TrainerController extends Controller
     {
         $trainers = Trainer::query()
             ->ordered()
-            ->get(['id', 'name', 'title', 'bio', 'photo_path', 'created_at', 'updated_at']);
+            ->get(['id', 'name', 'title', 'bio', 'photo_path', 'is_bookable', 'created_at', 'updated_at']);
 
         return Inertia::render('dashboard/trainers/TrainersIndex', [
             'trainers' => $trainers,
@@ -44,6 +44,7 @@ class TrainerController extends Controller
             'title' => $data['title'] ?? null,
             'bio' => $data['bio'] ?? null,
             'photo_path' => $photoPath,
+            'is_bookable' => array_key_exists('is_bookable', $data) ? (bool) $data['is_bookable'] : true,
         ]);
 
         return redirect()->route('dashboard.trainers')->with('success', 'Trainer created.');
@@ -52,7 +53,7 @@ class TrainerController extends Controller
     public function edit(Trainer $trainer): Response
     {
         return Inertia::render('dashboard/trainers/EditTrainer', [
-            'trainer' => $trainer->only(['id', 'name', 'title', 'bio', 'photo_path']),
+            'trainer' => $trainer->only(['id', 'name', 'title', 'bio', 'photo_path', 'is_bookable']),
         ]);
     }
 
@@ -65,6 +66,10 @@ class TrainerController extends Controller
             'title' => $data['title'] ?? null,
             'bio' => $data['bio'] ?? null,
         ];
+
+        if (array_key_exists('is_bookable', $data)) {
+            $update['is_bookable'] = (bool) $data['is_bookable'];
+        }
 
         if ($request->hasFile('photo')) {
             // Delete old photo if present
@@ -96,7 +101,7 @@ class TrainerController extends Controller
         $q = trim((string) ($validated['q'] ?? ''));
         $limit = (int) ($validated['limit'] ?? 8);
 
-        $query = Trainer::query();
+        $query = Trainer::query()->where('is_bookable', true);
         if ($q !== '') {
             $query->where(function ($sub) use ($q) {
                 $sub->where('name', 'like', "%$q%")

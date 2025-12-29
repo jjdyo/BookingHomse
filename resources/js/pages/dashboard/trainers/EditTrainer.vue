@@ -16,6 +16,7 @@ type Trainer = {
   title: string | null;
   bio: string | null;
   photo_path: string | null;
+  is_bookable?: boolean | null;
 };
 
 interface Props {
@@ -30,6 +31,7 @@ type FormData = {
   bio: string | null;
   photo: File | null;
   photo_path: string | null;
+  is_bookable: boolean;
 };
 
 const form = useForm<FormData>({
@@ -38,6 +40,7 @@ const form = useForm<FormData>({
   bio: props.trainer.bio ?? null,
   photo: null,
   photo_path: props.trainer.photo_path ?? null,
+  is_bookable: (props.trainer.is_bookable ?? true) as boolean,
 });
 
 const previewUrl = ref<string | null>(props.trainer.photo_path ? `/storage/${props.trainer.photo_path}` : null);
@@ -143,6 +146,18 @@ const breadcrumbs: BreadcrumbItem[] = [
             placeholder="Experience, specialties, certifications, etc."
           />
           <InputError :message="form.errors.bio" />
+        </div>
+
+        <!-- Bookable toggle -->
+        <div class="flex items-center gap-3 rounded-md border bg-card px-3 py-2 text-card-foreground">
+          <input
+            id="is_bookable"
+            name="is_bookable"
+            type="checkbox"
+            class="h-4 w-4"
+            v-model="form.is_bookable"
+          />
+          <Label for="is_bookable" class="select-none">Bookable?</Label>
         </div>
 
         <div class="flex items-center justify-end gap-3">

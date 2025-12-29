@@ -27,6 +27,15 @@ class TrainerFactory extends Factory
             // Keep null by default to avoid broken file references during seeding/tests;
             // upload handling should populate this with a real path on create.
             'photo_path' => null,
+            'is_bookable' => true,
         ];
+    }
+
+    /**
+     * State: mark trainer as not bookable.
+     */
+    public function unbookable(): self
+    {
+        return $this->state(fn () => ['is_bookable' => false]);
     }
 }

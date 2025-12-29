@@ -20,6 +20,7 @@ class UpdateTrainerRequest extends FormRequest
             'photo' => ['nullable', 'image', 'max:5120'], // 5 MB
             // Allow selecting an existing image from the Media Manager (relative path under public disk)
             'photo_path' => ['nullable', 'string', 'max:512'],
+            'is_bookable' => ['sometimes', 'boolean'],
         ];
     }
 }

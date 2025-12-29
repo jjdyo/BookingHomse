@@ -18,6 +18,15 @@ class DemoSite extends Seeder
      */
     public function run(): void
     {
+        // Neutral, high-contrast friendly palette (aiming for readability on light and dark surfaces)
+        $palette = [
+            '#2563EB', // blue-600
+            '#1D4ED8', // blue-700
+            '#7C3AED', // violet-600
+            '#0F766E', // teal-700
+            '#059669', // emerald-600
+            '#475569', // slate-600 (neutral)
+        ];
         // Copy demo images (if present) into public storage and collect relative paths
         $trainerPhotos = $this->copyDemoImages('trainers', ['Trainer1.jpg', 'Trainer2.jpg', 'Trainer3.jpg']);
         $horsePhotos = $this->copyDemoImages('horses', ['Horse1.jpg', 'Horse2.jpg', 'Horse3.jpg']);
@@ -80,7 +89,7 @@ class DemoSite extends Seeder
                 'trainer_name' => $trainer->name,
                 'service_name' => fake()->optional()->randomElement(['Beginner', 'Intermediate', 'Advanced', 'Trail']),
                 'location_id' => $location->id,
-                'color' => fake()->optional()->randomElement(['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444']),
+                'color' => fake()->optional()->randomElement($palette),
             ]);
             // attach some horses
             $attachCount = fake()->numberBetween(0, 3);
@@ -116,7 +125,7 @@ class DemoSite extends Seeder
                 'trainer_name' => $trainer->name,
                 'service_name' => fake()->optional()->randomElement(['Beginner', 'Intermediate', 'Advanced', 'Trail']),
                 'location_id' => $location->id,
-                'color' => fake()->optional()->randomElement(['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444']),
+                'color' => fake()->optional()->randomElement($palette),
             ]);
 
             // Attach 0-3 horses to the timeslot
@@ -149,7 +158,7 @@ class DemoSite extends Seeder
                 'trainer_name' => fake()->boolean(60) ? $maybeTrainer->name : null,
                 'service_name' => fake()->optional()->randomElement(['Beginner', 'Intermediate', 'Advanced', 'Trail']),
                 'location_id' => fake()->boolean(60) ? $maybeLocation->id : null,
-                'color' => fake()->optional()->randomElement(['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444']),
+                'color' => fake()->optional()->randomElement($palette),
             ]);
         }
     }

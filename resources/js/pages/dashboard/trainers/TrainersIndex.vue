@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import StatusChip from '@/components/StatusChip.vue';
 
 interface Trainer {
     id: number;
@@ -11,6 +12,7 @@ interface Trainer {
     title: string | null;
     bio: string | null;
     photo_path: string | null;
+    is_bookable?: boolean | null;
     created_at?: string;
     updated_at?: string;
 }
@@ -70,7 +72,8 @@ function photoUrl(path?: string | null) {
             <!-- Grid View -->
             <div v-if="grid" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div v-for="t in sorted" :key="t.id" class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start gap-3">
                         <img
                             v-if="photoUrl(t.photo_path)"
                             :src="photoUrl(t.photo_path)!"
@@ -81,6 +84,8 @@ function photoUrl(path?: string | null) {
                             <h3 class="text-lg font-semibold">{{ t.name }}</h3>
                             <p v-if="t.title" class="text-sm text-muted-foreground">{{ t.title }}</p>
                         </div>
+                        </div>
+                        <StatusChip :value="!!t.is_bookable" true-label="Bookable" false-label="Not bookable" />
                     </div>
                     <p v-if="t.bio" class="mt-3 line-clamp-4 text-sm text-muted-foreground">{{ t.bio }}</p>
                     <div class="mt-4 flex justify-end">
@@ -102,6 +107,7 @@ function photoUrl(path?: string | null) {
                             <th class="px-4 py-3">Photo</th>
                             <th class="px-4 py-3">Name</th>
                             <th class="px-4 py-3">Title</th>
+                            <th class="px-4 py-3">Bookable</th>
                             <th class="px-4 py-3">Bio</th>
                             <th class="px-4 py-3 text-right">Actions</th>
                         </tr>
@@ -118,6 +124,9 @@ function photoUrl(path?: string | null) {
                             </td>
                             <td class="px-4 py-3 font-medium">{{ t.name }}</td>
                             <td class="px-4 py-3">{{ t.title || '—' }}</td>
+                            <td class="px-4 py-3">
+                                <StatusChip :value="!!t.is_bookable" true-label="Yes" false-label="No" />
+                            </td>
                             <td class="px-4 py-3">{{ t.bio || '—' }}</td>
                             <td class="px-4 py-3 text-right">
                                 <a

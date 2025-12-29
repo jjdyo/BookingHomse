@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import StatusChip from '@/components/StatusChip.vue';
 
 const props = defineProps<{ locations: Array<{ id: number; name: string; address?: string | null; photo_url?: string | null; is_active: boolean }>; }>();
 
@@ -31,7 +32,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <h3 class="truncate font-medium">{{ l.name }}</h3>
-                <span v-if="!l.is_active" class="rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-700 dark:bg-rose-900/40 dark:text-rose-200">Inactive</span>
+                <StatusChip :value="l.is_active" true-label="Active" false-label="Inactive" />
               </div>
               <p class="truncate text-sm text-muted-foreground">{{ l.address || '—' }}</p>
             </div>
