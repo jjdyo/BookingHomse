@@ -8,6 +8,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
 import { ref, computed, onMounted, watch } from 'vue';
+import { normalizeDateTimeToIso } from '@/lib/datetime';
 import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import LocationTypeahead from '@/components/LocationTypeahead.vue';
@@ -50,9 +51,7 @@ const conflicts = ref<{ timeslots: any[]; trainers: any[]; horses: any[] }>({ ti
 const presetInitialHorses = ref<any[]>([]);
 
 function toIso(value: string) {
-    if (!value) return value as any;
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? (value as any) : d.toISOString();
+    return normalizeDateTimeToIso(value);
 }
 
 // CSRF helper: fetch the token from the standard Laravel meta tag, with cookie fallback

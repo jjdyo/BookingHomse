@@ -7,6 +7,7 @@ import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
+import { normalizeDateTimeToIso, formatIsoToInputDateTime } from '@/lib/datetime';
 import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import LocationTypeahead from '@/components/LocationTypeahead.vue';
@@ -36,16 +37,7 @@ const props = defineProps<Props>();
 
 // Format incoming ISO strings to the HTML5 datetime-local format (YYYY-MM-DDTHH:mm)
 function toInputDateTime(value: string | Date | null | undefined): string {
-  if (!value) return '';
-  const d = typeof value === 'string' ? new Date(value) : value;
-  if (!d || Number.isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  return formatIsoToInputDateTime(value);
 }
 
 type FormData = {
