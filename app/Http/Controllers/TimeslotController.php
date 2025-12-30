@@ -347,4 +347,47 @@ class TimeslotController extends Controller
 
         return response()->json($payload);
     }
+
+    public function sidebar()
+    {
+        $config = SiteConfig::instance();
+
+        if (! $config->show_event_feed) {
+            return response()->json([
+                'now_happening' => [],
+                'upcoming' => [],
+            ]);
+        }
+
+        $now = Carbon::now();
+        $lookahead = $now->copy()->addDays($config->event_feed_lookahead_days);
+
+        $nowHappening = Timeslot::query()
+            ->where('start_at', '<=', $now)
+            ->where('end_at', '>=', $now)
+            ->orderBy('start_at')
+            ->get(['id', 'title', 'description', 'start_at', 'end_at']);
+
+        $upcoming = Timeslot::query()
+            ->where('start_at', '>', $now)
+            ->where('start_at', '<=', $lookahead)
+            ->orderBy('start_at')
+            ->get(['id', 'title', 'description', 'start_at', 'end_at']);
+
+        $transform = function (Timeslot $t) {
+            return [
+                'id' => $t->id,
+                'title' => $t->title,
+                'description' => $t->description ? (mb_strlen($t->description) > 100 ? mb_substr($t->description, 0, 97).'...' : $t->description) : null,
+                'start_at' => $t->start_at->toIso8601String(),
+                'end_at' => $t->end_at->toIso8601String(),
+                'url' => route('book.timeslot', $t->id),
+            ];
+        };
+
+        return response()->json([
+            'now_happening' => $nowHappening->map($transform),
+            'upcoming' => $upcoming->map($transform),
+        ]);
+    }
 }

@@ -25,6 +25,7 @@ class SiteConfigWarningsTest extends TestCase
             'site_name' => 'Booking Homse',
             'booking_open_time' => '09:00',
             'booking_close_time' => '19:00',
+            'event_feed_lookahead_days' => 7,
             // booleans: send only timeslots to keep on
             'warn_overbook_timeslots' => 1,
         ]);

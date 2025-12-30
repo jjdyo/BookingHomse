@@ -13,6 +13,7 @@ import { normalizeDateTimeToIso } from '@/lib/datetime';
 import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import LocationTypeahead from '@/components/LocationTypeahead.vue';
+import TimeslotSidebar from '@/components/TimeslotSidebar.vue';
 
 type FormData = {
     title: string;
@@ -218,7 +219,7 @@ function onEventClick(arg: EventClickArg) {
     };
 }
 
-const { calendarRef, calendarOptions } = useBookingCalendarOptions({
+const { calendarRef, calendarOptions, publicSettings } = useBookingCalendarOptions({
     compact: true,
     eventClick: onEventClick,
     filters: filters,
@@ -332,7 +333,7 @@ function submitAnyway() {
 <template>
     <Head title="Create Timeslot" />
     <BasicLayout>
-        <section class="mx-auto max-w-5xl p-6">
+        <section class="mx-auto max-w-[1600px] p-6">
             <h1 class="text-2xl font-semibold">Create a Timeslot</h1>
             <p class="mt-2 text-muted-foreground">Enter the basic details for this availability window.</p>
 
@@ -344,7 +345,7 @@ function submitAnyway() {
             <div class="mt-6">
                 <CalendarFilters v-model="filters" @filter="onFilter" />
             </div>
-            <div class="mt-4 rounded-lg border bg-background p-2 shadow-sm">
+            <div class="mt-4 rounded-lg border bg-background p-2 shadow-sm min-w-0">
                 <div class="mb-2 flex items-center justify-between">
                     <h2 class="text-lg font-medium">Existing Bookings</h2>
                     <p class="text-sm text-muted-foreground">Use this calendar to reference other scheduled items.</p>
@@ -479,108 +480,114 @@ function submitAnyway() {
                 </div>
             </div>
 
-            <form class="mt-6 grid gap-5" @submit.prevent="submit">
-                <div class="grid gap-2">
-                    <Label for="title">Title</Label>
-                    <Input id="title" name="title" v-model="form.title" required placeholder="e.g., Private Lesson" />
-                    <InputError :message="form.errors.title" />
-                </div>
+            <form class="mt-6 flex flex-col lg:flex-row gap-8" @submit.prevent="submit">
+                <div class="grow space-y-5">
+                    <div class="grid gap-2">
+                        <Label for="title">Title</Label>
+                        <Input id="title" name="title" v-model="form.title" required placeholder="e.g., Private Lesson" />
+                        <InputError :message="form.errors.title" />
+                    </div>
 
-                <div class="grid gap-2">
-                    <Label for="description">Description</Label>
-                    <textarea
-                        id="description"
-                        name="description"
-                        v-model="form.description"
-                        required
-                        class="min-h-28 w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-                        placeholder="Add any notes or details..."
-                    />
-                    <InputError :message="form.errors.description" />
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div class="grid gap-2">
-                        <Label for="start_at">Start</Label>
-                        <Input id="start_at" name="start_at" v-model="form.start_at" type="datetime-local" required />
-                        <InputError :message="form.errors.start_at" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="end_at">End</Label>
-                        <Input id="end_at" name="end_at" v-model="form.end_at" type="datetime-local" required />
-                        <InputError :message="form.errors.end_at" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label for="capacity">Capacity</Label>
-                        <Input id="capacity" name="capacity" v-model.number="form.capacity" type="number" min="1" />
-                        <InputError :message="form.errors.capacity" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="price">Price</Label>
-                        <Input id="price" name="price" v-model.number="form.price" type="number" min="0" step="0.01" />
-                        <InputError :message="form.errors.price" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label for="service_name">Service (optional)</Label>
-                        <Input id="service_name" name="service_name" v-model="form.service_name" placeholder="e.g., Lesson" />
-                        <InputError :message="form.errors.service_name" />
-                    </div>
-                    <div class="grid gap-2">
-                        <TrainerMultiTypeahead
-                            input-id="trainer_ids"
-                            label="Trainers (optional)"
-                            placeholder="Type to search and add trainers"
-                            v-model="(form as any).trainer_ids"
-                            :initial="presetInitialTrainers"
+                        <Label for="description">Description</Label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            v-model="form.description"
+                            required
+                            class="min-h-28 w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            placeholder="Add any notes or details..."
                         />
-                        <InputError :message="(form.errors as any)['trainer_ids.*']" />
+                        <InputError :message="form.errors.description" />
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="start_at">Start</Label>
+                            <Input id="start_at" name="start_at" v-model="form.start_at" type="datetime-local" required />
+                            <InputError :message="form.errors.start_at" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="end_at">End</Label>
+                            <Input id="end_at" name="end_at" v-model="form.end_at" type="datetime-local" required />
+                            <InputError :message="form.errors.end_at" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="capacity">Capacity</Label>
+                            <Input id="capacity" name="capacity" v-model.number="form.capacity" type="number" min="1" />
+                            <InputError :message="form.errors.capacity" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="price">Price</Label>
+                            <Input id="price" name="price" v-model.number="form.price" type="number" min="0" step="0.01" />
+                            <InputError :message="form.errors.price" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="service_name">Service (optional)</Label>
+                            <Input id="service_name" name="service_name" v-model="form.service_name" placeholder="e.g., Lesson" />
+                            <InputError :message="form.errors.service_name" />
+                        </div>
+                        <div class="grid gap-2">
+                            <TrainerMultiTypeahead
+                                input-id="trainer_ids"
+                                label="Trainers (optional)"
+                                placeholder="Type to search and add trainers"
+                                v-model="(form as any).trainer_ids"
+                                :initial="presetInitialTrainers"
+                            />
+                            <InputError :message="(form.errors as any)['trainer_ids.*']" />
+                        </div>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <LocationTypeahead
+                            input-id="location_id"
+                            label="Location (optional)"
+                            placeholder="Type to search locations"
+                            v-model="form.location_id"
+                        />
+                        <InputError :message="(form.errors as any).location_id" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="color">Color (optional)</Label>
+                        <input id="color" name="color" type="color" v-model="(form as any).color" class="h-10 w-24 cursor-pointer rounded-md border p-1" />
+                        <p class="text-xs text-muted-foreground">Choose an event color for calendars. Defaults to blue if left empty.</p>
+                        <InputError :message="(form.errors as any).color" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <HorseTypeahead
+                            input-id="horse_ids"
+                            label="Horses (optional)"
+                            placeholder="Type to search and add horses"
+                            v-model="form.horse_ids"
+                            :initial="presetInitialHorses"
+                        />
+                        <p class="text-xs text-muted-foreground">Selected horses will be linked to this timeslot and used for overlap warnings.</p>
+                        <InputError :message="form.errors['horse_ids.*'] as any" />
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3">
+                        <div class="mr-auto text-xs text-muted-foreground">
+                            <span v-if="!conflictCheckError && !hasAnyRelevantConflicts">No conflicts returned or warnings disabled.</span>
+                            <span v-else-if="hasAnyRelevantConflicts">Conflicts detected — you will be prompted before saving.</span>
+                            <span v-else-if="conflictCheckError">Conflict check failed — fix and try again, or use Continue in the modal after a successful check.</span>
+                        </div>
+                        <Button type="submit" :disabled="form.processing || checkingConflicts">
+                            {{ form.processing || checkingConflicts ? 'Saving…' : 'Save Timeslot' }}
+                        </Button>
                     </div>
                 </div>
 
-                <div class="grid gap-2">
-                    <LocationTypeahead
-                        input-id="location_id"
-                        label="Location (optional)"
-                        placeholder="Type to search locations"
-                        v-model="form.location_id"
-                    />
-                    <InputError :message="(form.errors as any).location_id" />
-                </div>
-
-                <div class="grid gap-2">
-                    <Label for="color">Color (optional)</Label>
-                    <input id="color" name="color" type="color" v-model="(form as any).color" class="h-10 w-24 cursor-pointer rounded-md border p-1" />
-                    <p class="text-xs text-muted-foreground">Choose an event color for calendars. Defaults to blue if left empty.</p>
-                    <InputError :message="(form.errors as any).color" />
-                </div>
-
-                <div class="grid gap-2">
-                    <HorseTypeahead
-                        input-id="horse_ids"
-                        label="Horses (optional)"
-                        placeholder="Type to search and add horses"
-                        v-model="form.horse_ids"
-                        :initial="presetInitialHorses"
-                    />
-                    <p class="text-xs text-muted-foreground">Selected horses will be linked to this timeslot and used for overlap warnings.</p>
-                    <InputError :message="form.errors['horse_ids.*'] as any" />
-                </div>
-
-                <div class="flex items-center justify-end gap-3">
-                    <div class="mr-auto text-xs text-muted-foreground">
-                        <span v-if="!conflictCheckError && !hasAnyRelevantConflicts">No conflicts returned or warnings disabled.</span>
-                        <span v-else-if="hasAnyRelevantConflicts">Conflicts detected — you will be prompted before saving.</span>
-                        <span v-else-if="conflictCheckError">Conflict check failed — fix and try again, or use Continue in the modal after a successful check.</span>
-                    </div>
-                    <Button type="submit" :disabled="form.processing || checkingConflicts">
-                        {{ (form.processing || checkingConflicts) ? 'Saving…' : 'Save Timeslot' }}
-                    </Button>
+                <div v-if="publicSettings?.show_event_feed" class="w-full lg:w-[350px] shrink-0">
+                    <TimeslotSidebar />
                 </div>
             </form>
         </section>

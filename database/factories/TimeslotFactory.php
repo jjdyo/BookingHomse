@@ -31,6 +31,7 @@ class TimeslotFactory extends Factory
             'trainer_name' => $this->faker->optional()->name(),
             'service_name' => $this->faker->optional()->randomElement(['Beginner Lesson', 'Intermediate Lesson', 'Advanced Lesson', 'Trail']),
             'location_id' => null,
+            'color' => $this->faker->optional()->safeHexColor(),
         ];
     }
 }

@@ -17,6 +17,8 @@ class SiteConfig extends Model
         'warn_overbook_trainers',
         'warn_overbook_horses',
         'warn_overbook_timeslots',
+        'show_event_feed',
+        'event_feed_lookahead_days',
     ];
 
     public static function instance(): self
@@ -31,6 +33,8 @@ class SiteConfig extends Model
                 'warn_overbook_trainers' => true,
                 'warn_overbook_horses' => true,
                 'warn_overbook_timeslots' => true,
+                'show_event_feed' => true,
+                'event_feed_lookahead_days' => 7,
             ]
         );
     }

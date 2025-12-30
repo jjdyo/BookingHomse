@@ -5,6 +5,7 @@ import { Head } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions, type CalendarFilterState } from '@/composables/useBookingCalendar';
 import CalendarFilters from '@/components/CalendarFilters.vue';
+import TimeslotSidebar from '@/components/TimeslotSidebar.vue';
 
 import { ref } from 'vue';
 
@@ -47,7 +48,7 @@ function onEventClick(arg: EventClickArg) {
     };
 }
 
-const { calendarRef, calendarOptions } = useBookingCalendarOptions({
+const { calendarRef, calendarOptions, publicSettings } = useBookingCalendarOptions({
     eventClick: onEventClick,
     filters: filters,
 });
@@ -63,7 +64,7 @@ function onFilter() {
 <template>
     <Head title="Request Booking" />
     <BasicLayout>
-        <section class="mx-auto max-w-6xl p-6">
+        <section class="mx-auto max-w-[1600px] p-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-semibold">Request Booking</h1>
@@ -75,8 +76,14 @@ function onFilter() {
                 <CalendarFilters v-model="filters" @filter="onFilter" />
             </div>
 
-            <div class="mt-6 rounded-lg border bg-background p-2 shadow-sm booking-calendar">
-                <FullCalendar ref="calendarRef" :options="calendarOptions" />
+            <div class="mt-6 flex flex-col lg:flex-row gap-8">
+                <div class="grow rounded-lg border bg-background p-2 shadow-sm booking-calendar min-w-0">
+                    <FullCalendar ref="calendarRef" :options="calendarOptions" />
+                </div>
+
+                <div v-if="publicSettings?.show_event_feed" class="w-full lg:w-[350px] shrink-0">
+                    <TimeslotSidebar />
+                </div>
             </div>
 
             <!-- Details Modal -->

@@ -19,6 +19,11 @@ class SiteConfigFactory extends Factory
             'booking_open_time' => '09:00:00',
             'booking_close_time' => '19:00:00',
             'logo_path' => null,
+            'warn_overbook_trainers' => true,
+            'warn_overbook_horses' => true,
+            'warn_overbook_timeslots' => true,
+            'show_event_feed' => true,
+            'event_feed_lookahead_days' => 7,
         ];
     }
 }

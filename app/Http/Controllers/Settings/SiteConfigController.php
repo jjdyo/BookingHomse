@@ -24,6 +24,8 @@ class SiteConfigController extends Controller
                 'warn_overbook_trainers' => (bool) $config->warn_overbook_trainers,
                 'warn_overbook_horses' => (bool) $config->warn_overbook_horses,
                 'warn_overbook_timeslots' => (bool) $config->warn_overbook_timeslots,
+                'show_event_feed' => (bool) $config->show_event_feed,
+                'event_feed_lookahead_days' => (int) $config->event_feed_lookahead_days,
             ],
         ]);
     }
@@ -80,6 +82,8 @@ class SiteConfigController extends Controller
             'warn_overbook_trainers' => ['nullable', 'boolean'],
             'warn_overbook_horses' => ['nullable', 'boolean'],
             'warn_overbook_timeslots' => ['nullable', 'boolean'],
+            'show_event_feed' => ['nullable', 'boolean'],
+            'event_feed_lookahead_days' => ['required', 'integer', 'min:1', 'max:31'],
         ]);
 
         $original = [
@@ -97,6 +101,8 @@ class SiteConfigController extends Controller
         $config->warn_overbook_trainers = (bool) ($request->boolean('warn_overbook_trainers'));
         $config->warn_overbook_horses = (bool) ($request->boolean('warn_overbook_horses'));
         $config->warn_overbook_timeslots = (bool) ($request->boolean('warn_overbook_timeslots'));
+        $config->show_event_feed = (bool) ($request->boolean('show_event_feed'));
+        $config->event_feed_lookahead_days = (int) $data['event_feed_lookahead_days'];
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('logos', 'public');
@@ -141,6 +147,8 @@ class SiteConfigController extends Controller
             'warn_overbook_trainers' => (bool) $config->warn_overbook_trainers,
             'warn_overbook_horses' => (bool) $config->warn_overbook_horses,
             'warn_overbook_timeslots' => (bool) $config->warn_overbook_timeslots,
+            'show_event_feed' => (bool) $config->show_event_feed,
+            'event_feed_lookahead_days' => (int) $config->event_feed_lookahead_days,
         ]);
     }
 }

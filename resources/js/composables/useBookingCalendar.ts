@@ -1,4 +1,5 @@
-import { ref, onMounted, type Ref } from 'vue';
+import { ref, onMounted, type Ref, watch, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -23,6 +24,8 @@ type Options = {
 
 export function useBookingCalendarOptions(opts: Options = {}) {
   const calendarRef = ref<any>(null);
+  const page = usePage();
+  const publicSettings = computed(() => (page.props as any).site);
 
   const compact = !!opts.compact;
   const eventsUrl = opts.eventsUrl ?? '/timeslots/feed';
@@ -47,9 +50,14 @@ export function useBookingCalendarOptions(opts: Options = {}) {
     dayMaxEventRows: compact ? 3 : 4,
     dayMaxEvents: true,
     // Defaults; overridden by public settings when available
-    slotMinTime: '09:00:00',
-    slotMaxTime: '19:00:00',
-    scrollTime: '09:00:00',
+    slotMinTime: publicSettings.value?.booking_open_time || '09:00:00',
+    slotMaxTime: publicSettings.value?.booking_close_time || '19:00:00',
+    scrollTime: publicSettings.value?.booking_open_time || '09:00:00',
+    businessHours: {
+      startTime: publicSettings.value?.booking_open_time || '09:00:00',
+      endTime: publicSettings.value?.booking_close_time || '19:00:00',
+      daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+    },
     height: 'auto',
 
     // Client-side filtering logic
@@ -119,36 +127,28 @@ export function useBookingCalendarOptions(opts: Options = {}) {
     },
   };
 
-  onMounted(async () => {
-    try {
-      const res = await fetch('/settings/public');
-      if (!res.ok) return;
-      const s = await res.json();
-      if (s?.booking_open_time && s?.booking_close_time) {
-        const api = calendarRef.value?.getApi?.();
-        if (api) {
-          api.setOption('slotMinTime', s.booking_open_time);
-          api.setOption('slotMaxTime', s.booking_close_time);
-          api.setOption('scrollTime', s.booking_open_time);
-          api.setOption('businessHours', {
-            startTime: s.booking_open_time,
-            endTime: s.booking_close_time,
-            daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-          });
-        } else {
-          calendarOptions.slotMinTime = s.booking_open_time;
-          calendarOptions.slotMaxTime = s.booking_close_time;
-          calendarOptions.scrollTime = s.booking_open_time;
-          calendarOptions.businessHours = {
-            startTime: s.booking_open_time,
-            endTime: s.booking_close_time,
-            daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-          };
-        }
-      }
-    } catch (e) {
-        return(e)    }
+  function updateOptions(s: any) {
+    if (!s?.booking_open_time || !s?.booking_close_time) return;
+    const api = calendarRef.value?.getApi?.();
+    if (api) {
+      api.setOption('slotMinTime', s.booking_open_time);
+      api.setOption('slotMaxTime', s.booking_close_time);
+      api.setOption('scrollTime', s.booking_open_time);
+      api.setOption('businessHours', {
+        startTime: s.booking_open_time,
+        endTime: s.booking_close_time,
+        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+      });
+    }
+  }
+
+  onMounted(() => {
+    updateOptions(publicSettings.value);
   });
 
-  return { calendarRef, calendarOptions };
+  watch(publicSettings, (newVal) => {
+    updateOptions(newVal);
+  }, { deep: true });
+
+  return { calendarRef, calendarOptions, publicSettings };
 }

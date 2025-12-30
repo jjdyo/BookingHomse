@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 import MediaPicker from '@/components/media/MediaPicker.vue'
@@ -15,10 +15,31 @@ type PageProps = {
     warn_overbook_trainers?: boolean;
     warn_overbook_horses?: boolean;
     warn_overbook_timeslots?: boolean;
+    show_event_feed?: boolean;
+    event_feed_lookahead_days?: number;
+  },
+  flash: {
+    success?: string | null;
+    error?: string | null;
   }
 }
 
 const page = usePage<PageProps>();
+
+const activeTab = ref<'appearance' | 'operations' | 'warnings' | 'feed' | 'filler5'>('appearance');
+const showPicker = ref(false);
+
+onMounted(() => {
+  const savedTab = localStorage.getItem('site_config_active_tab');
+  if (savedTab && ['appearance', 'operations', 'warnings', 'feed', 'filler5'].includes(savedTab)) {
+    activeTab.value = savedTab as any;
+  }
+});
+
+watch(activeTab, (val) => {
+  localStorage.setItem('site_config_active_tab', val);
+});
+
 const form = ref({
   site_name: page.props.config.site_name ?? 'Booking Homse',
   booking_open_time: (page.props.config.booking_open_time ?? '09:00:00').slice(0,5),
@@ -28,13 +49,16 @@ const form = ref({
   warn_overbook_trainers: page.props.config.warn_overbook_trainers ?? true,
   warn_overbook_horses: page.props.config.warn_overbook_horses ?? true,
   warn_overbook_timeslots: page.props.config.warn_overbook_timeslots ?? true,
+  show_event_feed: page.props.config.show_event_feed ?? true,
+  event_feed_lookahead_days: page.props.config.event_feed_lookahead_days ?? 7,
 });
 
 // UX state for upload/progress/feedback
 const isSubmitting = ref(false);
 const progress = ref(0); // 0-100
-const successMessage = ref<string | null>(null);
-const errorMessage = ref<string | null>(null);
+
+const flashSuccess = computed(() => page.props.flash.success);
+const flashError = computed(() => page.props.flash.error);
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Home', href: home().url },
@@ -83,11 +107,11 @@ function onSubmit(e: Event) {
   if (form.value.warn_overbook_trainers) data.append('warn_overbook_trainers', '1');
   if (form.value.warn_overbook_horses) data.append('warn_overbook_horses', '1');
   if (form.value.warn_overbook_timeslots) data.append('warn_overbook_timeslots', '1');
+  if (form.value.show_event_feed) data.append('show_event_feed', '1');
+  data.append('event_feed_lookahead_days', form.value.event_feed_lookahead_days.toString());
   // Use method spoofing for robust multipart handling on Laravel
   data.append('_method', 'PATCH');
 
-  successMessage.value = null;
-  errorMessage.value = null;
   isSubmitting.value = true;
   progress.value = 0;
 
@@ -118,16 +142,15 @@ function onSubmit(e: Event) {
       }
     },
     onSuccess: () => {
-      successMessage.value = 'Settings saved successfully.';
       // reset local file input so preview shows persisted logo from props
       form.value.logo = null;
       form.value.logo_path = null;
-      // Ensure we fetch the latest config props from server so the UI reflects DB values
-      router.reload({ only: ['config'] });
+
+      // Global UI changes (like sidebar visibility) are now reactive via shared props.
+      // No full page reload needed, which fixes the disappearing flash message.
     },
     onError: (errors) => {
       // Show a generic error banner if specific field errors exist; they will show inline too
-      errorMessage.value = 'Please fix the errors below and try again.';
       console.error('Site settings save failed', errors);
     },
     onFinish: () => {
@@ -152,11 +175,11 @@ function onSubmit(e: Event) {
 
       <form class="mt-6 space-y-6" @submit="onSubmit">
         <!-- Global feedback banners -->
-        <div v-if="successMessage" class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-green-800">
-          {{ successMessage }}
+        <div v-if="flashSuccess" class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-green-800">
+          {{ flashSuccess }}
         </div>
-        <div v-if="errorMessage" class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-red-800">
-          {{ errorMessage }}
+        <div v-if="flashError" class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-red-800">
+          {{ flashError }}
         </div>
 
         <!-- Upload progress bar (only when a logo file is uploading) -->
@@ -177,8 +200,8 @@ function onSubmit(e: Event) {
                     :class="activeTab==='warnings' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
                     @click="activeTab='warnings'">Warnings</button>
             <button type="button" class="px-3 py-2 text-sm"
-                    :class="activeTab==='filler4' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
-                    @click="activeTab='filler4'">Filler 4</button>
+                    :class="activeTab==='feed' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
+                    @click="activeTab='feed'">Event Feed</button>
             <button type="button" class="px-3 py-2 text-sm"
                     :class="activeTab==='filler5' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'"
                     @click="activeTab='filler5'">Filler 5</button>
@@ -248,8 +271,22 @@ function onSubmit(e: Event) {
             </div>
           </div>
 
-          <div v-show="activeTab==='filler4'" class="mt-4 text-sm text-muted-foreground">
-            Placeholder for future settings.
+          <div v-show="activeTab==='feed'" class="mt-4 space-y-4">
+            <div class="rounded-md border p-4">
+              <label class="inline-flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" v-model="form.show_event_feed" class="h-4 w-4" />
+                Enable the timeslot event feed?
+              </label>
+              <p class="mt-1 text-sm text-muted-foreground">If enabled, the "Now Happening" and "Upcoming Events" feed will be displayed on booking and timeslot pages.</p>
+            </div>
+            <div class="rounded-md border p-4">
+              <label class="block text-sm font-medium">How far in advance should the now happening/upcoming events feed read?</label>
+              <div class="mt-2 flex items-center gap-2">
+                <input v-model.number="form.event_feed_lookahead_days" type="number" min="1" max="31" class="w-20 rounded-md border px-3 py-2" />
+                <span class="text-sm">days</span>
+              </div>
+              <p class="mt-1 text-sm text-muted-foreground">Specify the number of days to look ahead for upcoming events (1-31 days).</p>
+            </div>
           </div>
           <div v-show="activeTab==='filler5'" class="mt-4 text-sm text-muted-foreground">
             Placeholder for future settings.
@@ -275,15 +312,7 @@ function onSubmit(e: Event) {
       </form>
     </section>
   </AppLayout>
-  </template>
+</template>
 
-<script lang="ts">
-export default {
-  data() {
-    return {
-      activeTab: 'appearance' as 'appearance' | 'operations' | 'warnings' | 'filler4' | 'filler5',
-      showPicker: false as boolean,
-    };
-  },
-};
-</script>
+<style>
+</style>

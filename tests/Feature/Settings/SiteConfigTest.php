@@ -38,6 +38,7 @@ class SiteConfigTest extends TestCase
             'site_name' => 'Homse Ranch',
             'booking_open_time' => '08:30',
             'booking_close_time' => '17:45',
+            'event_feed_lookahead_days' => 7,
         ]);
 
         $response->assertRedirect();
@@ -58,6 +59,7 @@ class SiteConfigTest extends TestCase
             'site_name' => 'FormData Name',
             'booking_open_time' => '06:15',
             'booking_close_time' => '20:45',
+            'event_feed_lookahead_days' => 14,
         ]);
 
         $response->assertRedirect();
@@ -85,6 +87,7 @@ class SiteConfigTest extends TestCase
             'site_name' => 'Logo Test',
             'booking_open_time' => '09:00',
             'booking_close_time' => '18:00',
+            'event_feed_lookahead_days' => 7,
             'logo' => $file,
         ]);
 

@@ -51,6 +51,8 @@ class HandleInertiaRequests extends Middleware
                 'booking_open_time' => $config->booking_open_time,
                 'booking_close_time' => $config->booking_close_time,
                 'logo_url' => $config->logo_url,
+                'show_event_feed' => (bool) $config->show_event_feed,
+                'event_feed_lookahead_days' => (int) $config->event_feed_lookahead_days,
             ],
             'auth' => [
                 'user' => $request->user(),

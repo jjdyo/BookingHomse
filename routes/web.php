@@ -28,8 +28,9 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Timeslots: feed + basic create/store + booking placeholder
+// Timeslots: feed + sidebar + basic create/store + booking placeholder
 Route::get('/timeslots/feed', [TimeslotController::class, 'feed'])->name('timeslots.feed');
+Route::get('/timeslots/sidebar', [TimeslotController::class, 'sidebar'])->name('timeslots.sidebar');
 
 Route::middleware(['auth'])->group(function () {
     // Dashboard sub-tabs

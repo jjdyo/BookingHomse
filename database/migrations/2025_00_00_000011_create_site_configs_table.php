@@ -19,6 +19,8 @@ return new class extends Migration
             $table->boolean('warn_overbook_trainers')->default(true);
             $table->boolean('warn_overbook_horses')->default(true);
             $table->boolean('warn_overbook_timeslots')->default(true);
+            $table->boolean('show_event_feed')->default(true);
+            $table->integer('event_feed_lookahead_days')->default(7);
             $table->timestamps();
         });
 
@@ -30,6 +32,8 @@ return new class extends Migration
             'warn_overbook_trainers' => true,
             'warn_overbook_horses' => true,
             'warn_overbook_timeslots' => true,
+            'show_event_feed' => true,
+            'event_feed_lookahead_days' => 7,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

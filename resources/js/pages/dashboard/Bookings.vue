@@ -7,6 +7,7 @@ import { dashboard, home } from '@/routes';
 import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions, type CalendarFilterState } from '@/composables/useBookingCalendar';
 import CalendarFilters from '@/components/CalendarFilters.vue';
+import TimeslotSidebar from '@/components/TimeslotSidebar.vue';
 
 import { ref } from 'vue';
 
@@ -47,7 +48,7 @@ function onEventClick(arg: EventClickArg) {
     };
 }
 
-const { calendarRef, calendarOptions } = useBookingCalendarOptions({
+const { calendarRef, calendarOptions, publicSettings } = useBookingCalendarOptions({
     eventClick: onEventClick,
     filters: filters,
 });
@@ -69,7 +70,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 <template>
     <Head title="Dashboard — Timeslots" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <section class="mx-auto max-w-6xl p-6">
+        <section class="mx-auto max-w-[1600px] p-6">
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-semibold">Timeslots</h1>
                 <a href="/timeslots/create" class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">New Timeslot</a>
@@ -80,8 +81,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <CalendarFilters v-model="filters" @filter="onFilter" />
             </div>
 
-            <div class="mt-6 rounded-lg border bg-background p-2 shadow-sm booking-calendar">
-                <FullCalendar ref="calendarRef" :options="calendarOptions" />
+            <div class="mt-6 flex flex-col lg:flex-row gap-8">
+                <div class="grow rounded-lg border bg-background p-2 shadow-sm booking-calendar min-w-0">
+                    <FullCalendar ref="calendarRef" :options="calendarOptions" />
+                </div>
+
+                <div v-if="publicSettings?.show_event_feed" class="w-full lg:w-[350px] shrink-0">
+                    <TimeslotSidebar />
+                </div>
             </div>
 
             <!-- Details Modal (copy of public calendar for parity) -->
