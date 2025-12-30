@@ -23,18 +23,9 @@ class RegisterResponse implements RegisterResponseContract
         // After registration, users must verify their email.
         $user = $request->user();
         if ($user && ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) && ! $user->hasVerifiedEmail()) {
-            // Auto-send verification email if not recently sent (60s cooldown)
-            $lastSentAt = $request->session()->get('verification.last_sent_at');
-            $shouldSend = ! $lastSentAt || now()->diffInSeconds($lastSentAt) >= 60;
-
-            if ($shouldSend) {
-                $user->sendEmailVerificationNotification();
-                $request->session()->put('verification.last_sent_at', now());
-
-                return Redirect::route('verification.notice')->with('status', 'verification-link-sent');
-            }
+            return Redirect::route('verification.notice');
         }
 
-        return Redirect::route('verification.notice');
+        return Redirect::route('dashboard');
     }
 }
