@@ -48,6 +48,9 @@ class TimeslotController extends Controller
             'trainers' => function ($q) {
                 $q->select('trainers.id', 'trainers.name');
             },
+            'horses' => function ($q) {
+                $q->select('horses.id', 'horses.name');
+            },
         ])->orderBy('start_at')->get();
 
         return $slots->map(function (Timeslot $t) {
@@ -68,6 +71,8 @@ class TimeslotController extends Controller
                     // Multi-trainer support
                     'trainer_names' => $t->trainers->pluck('name')->values(),
                     'trainer_label' => $t->trainers->pluck('name')->implode(', '),
+                    'horse_names' => $t->horses->pluck('name')->values(),
+                    'horse_label' => $t->horses->pluck('name')->implode(', '),
                     'location_name' => optional($t->location)->name,
                     'location_address' => optional($t->location)->address,
                     'color' => $t->color,

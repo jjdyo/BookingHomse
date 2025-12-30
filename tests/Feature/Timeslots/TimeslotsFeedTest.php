@@ -5,6 +5,7 @@ namespace Tests\Feature\Timeslots;
 use App\Models\Location;
 use App\Models\Timeslot;
 use App\Models\Trainer;
+use App\Models\Horse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -53,5 +54,55 @@ class TimeslotsFeedTest extends TestCase
         $this->assertSame('Alex', $first['extendedProps']['trainer_label']);
         $this->assertSame('Arena A', $first['extendedProps']['location_name']);
         $this->assertSame('123 Farm Rd', $first['extendedProps']['location_address']);
+    }
+
+    public function test_feed_returns_timeslots_with_horse_data(): void
+    {
+        $start = now()->addDay()->startOfHour();
+        $end = (clone $start)->addHour();
+
+        $slot = Timeslot::create([
+            'title' => 'Horse Lesson',
+            'description' => 'Test description',
+            'start_at' => $start,
+            'end_at' => $end,
+        ]);
+
+        $horse1 = Horse::factory()->create(['name' => 'Spirit']);
+        $horse2 = Horse::factory()->create(['name' => 'Rain']);
+        $slot->horses()->sync([$horse1->id, $horse2->id]);
+
+        $json = $this->getJson('/timeslots/feed')->assertOk()->json();
+
+        $this->assertCount(1, $json);
+        $props = $json[0]['extendedProps'];
+
+        $this->assertEquals(['Spirit', 'Rain'], $props['horse_names']);
+        $this->assertSame('Spirit, Rain', $props['horse_label']);
+    }
+
+    public function test_feed_returns_timeslots_with_multi_trainer_data(): void
+    {
+        $start = now()->addDay()->startOfHour();
+        $end = (clone $start)->addHour();
+
+        $slot = Timeslot::create([
+            'title' => 'Group Session',
+            'description' => 'Test description',
+            'start_at' => $start,
+            'end_at' => $end,
+        ]);
+
+        $trainer1 = Trainer::factory()->create(['name' => 'Trainer A']);
+        $trainer2 = Trainer::factory()->create(['name' => 'Trainer B']);
+        $slot->trainers()->sync([$trainer1->id, $trainer2->id]);
+
+        $json = $this->getJson('/timeslots/feed')->assertOk()->json();
+
+        $this->assertCount(1, $json);
+        $props = $json[0]['extendedProps'];
+
+        $this->assertEquals(['Trainer A', 'Trainer B'], $props['trainer_names']);
+        $this->assertSame('Trainer A, Trainer B', $props['trainer_label']);
     }
 }

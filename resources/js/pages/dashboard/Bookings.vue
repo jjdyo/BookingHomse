@@ -5,11 +5,20 @@ import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 
 import FullCalendar from '@fullcalendar/vue3';
-import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
+import { useBookingCalendarOptions, type CalendarFilterState } from '@/composables/useBookingCalendar';
+import CalendarFilters from '@/components/CalendarFilters.vue';
 
 import { ref } from 'vue';
 
 type EventClickArg = { event: any };
+
+const filters = ref<CalendarFilterState>({
+    search: '',
+    title: '',
+    address: '',
+    horses: '',
+    trainers: '',
+});
 
 const selected = ref<null | {
     id: number;
@@ -33,12 +42,22 @@ function onEventClick(arg: EventClickArg) {
         end: e.end?.toISOString?.() ?? e.endStr,
         capacity: e.extendedProps?.capacity,
         price: e.extendedProps?.price,
-        trainer_name: e.extendedProps?.trainer_name,
+        trainer_name: e.extendedProps?.trainer_label,
         service_name: e.extendedProps?.service_name,
     };
 }
 
-const { calendarRef, calendarOptions } = useBookingCalendarOptions({ eventClick: onEventClick });
+const { calendarRef, calendarOptions } = useBookingCalendarOptions({
+    eventClick: onEventClick,
+    filters: filters,
+});
+
+function onFilter() {
+    const api = calendarRef.value?.getApi();
+    if (api) {
+        api.refetchEvents();
+    }
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: home().url },
@@ -56,6 +75,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <a href="/timeslots/create" class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">New Timeslot</a>
             </div>
             <p class="mt-2 text-muted-foreground">Manage bookable timeslots and related bookings. Click a timeslot to view details.</p>
+
+            <div class="mt-8">
+                <CalendarFilters v-model="filters" @filter="onFilter" />
+            </div>
 
             <div class="mt-6 rounded-lg border bg-background p-2 shadow-sm booking-calendar">
                 <FullCalendar ref="calendarRef" :options="calendarOptions" />

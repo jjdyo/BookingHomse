@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
-import { useBookingCalendarOptions } from '@/composables/useBookingCalendar';
+import { useBookingCalendarOptions, type CalendarFilterState } from '@/composables/useBookingCalendar';
+import CalendarFilters from '@/components/CalendarFilters.vue';
 import { ref, computed, onMounted, watch } from 'vue';
 import { normalizeDateTimeToIso } from '@/lib/datetime';
 import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
@@ -181,6 +182,14 @@ async function submit() {
 // Lightweight reference calendar at the top so creators can see existing bookings
 type EventClickArg = { event: any };
 
+const filters = ref<CalendarFilterState>({
+    search: '',
+    title: '',
+    address: '',
+    horses: '',
+    trainers: '',
+});
+
 const selected = ref<null | {
     id: number;
     title: string;
@@ -208,7 +217,18 @@ function onEventClick(arg: EventClickArg) {
     };
 }
 
-const { calendarRef, calendarOptions } = useBookingCalendarOptions({ compact: true, eventClick: onEventClick });
+const { calendarRef, calendarOptions } = useBookingCalendarOptions({
+    compact: true,
+    eventClick: onEventClick,
+    filters: filters,
+});
+
+function onFilter() {
+    const api = calendarRef.value?.getApi();
+    if (api) {
+        api.refetchEvents();
+    }
+}
 
 // --- Dynamic draft preview on the calendar ---
 // Build a client-only event that follows the form's start/end/title without affecting save logic
@@ -319,7 +339,10 @@ function submitAnyway() {
             </div>
 
             <!-- Reference Calendar -->
-            <div class="mt-6 rounded-lg border bg-background p-2 shadow-sm">
+            <div class="mt-6">
+                <CalendarFilters v-model="filters" @filter="onFilter" />
+            </div>
+            <div class="mt-4 rounded-lg border bg-background p-2 shadow-sm">
                 <div class="mb-2 flex items-center justify-between">
                     <h2 class="text-lg font-medium">Existing Bookings</h2>
                     <p class="text-sm text-muted-foreground">Use this calendar to reference other scheduled items.</p>
