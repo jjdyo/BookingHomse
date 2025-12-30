@@ -32,13 +32,33 @@ export function useBookingCalendarOptions(opts: Options = {}) {
 
   const calendarOptions: any = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-    initialView: 'dayGridMonth',
     timeZone: import.meta.env.VITE_TZ ?? 'UTC',
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay',
     },
+    // Mobile responsive toolbar overrides
+    handleWindowResize: true,
+    windowResizeDelay: 100,
+    windowResize: (arg: any) => {
+      const api = arg.view.calendar;
+      if (window.innerWidth < 768) {
+        api.setOption('headerToolbar', {
+          left: 'prev,next',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay', // Added week back
+        });
+      } else {
+        api.setOption('headerToolbar', {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay',
+        });
+      }
+    },
+    // We also set the initial views more intelligently if we can detect width early
+    initialView: opts.compact ? 'timeGridDay' : (window.innerWidth < 768 ? 'timeGridDay' : 'dayGridMonth'),
     weekends: true,
     selectable: false,
     editable: false,
@@ -144,6 +164,18 @@ export function useBookingCalendarOptions(opts: Options = {}) {
 
   onMounted(() => {
     updateOptions(publicSettings.value);
+
+    // Initial responsive check
+    if (window.innerWidth < 768) {
+      const api = calendarRef.value?.getApi?.();
+      if (api) {
+        api.setOption('headerToolbar', {
+          left: 'prev,next',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay',
+        });
+      }
+    }
   });
 
   watch(publicSettings, (newVal) => {

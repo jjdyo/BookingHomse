@@ -274,3 +274,54 @@
     padding: 4px 6px;
     line-height: 1.2;
 }
+
+/* Responsive FullCalendar overrides */
+@media (max-width: 767px) {
+    .booking-calendar .fc .fc-header-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .booking-calendar .fc .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .booking-calendar .fc .fc-toolbar-title {
+        font-size: 1.1rem;
+    }
+
+    /* Make buttons slightly smaller on mobile to save space */
+    .booking-calendar .fc .fc-button {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    /* Stack buttons in groups if they still overflow */
+    .booking-calendar .fc .fc-button-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Hide day names on very small screens in month view if they are too wide */
+    @media (max-width: 480px) {
+        .booking-calendar .fc .fc-col-header-cell-cushion {
+            font-size: 0.75rem;
+            padding: 2px;
+        }
+    }
+
+    /* Ensure the calendar doesn't hug the right edge */
+    .booking-calendar {
+        margin-right: 0.5rem;
+    }
+
+    /* Fix for top-right dropdowns hugging the edge */
+    .ml-auto.flex.items-center,
+    .lg\:hidden .relative.size-10,
+    header .mx-auto.flex.items-center.justify-between {
+        padding-right: 0.5rem;
+    }
+}
