@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Timeslots;
 
+use App\Models\Horse;
 use App\Models\Location;
 use App\Models\Timeslot;
 use App\Models\Trainer;
-use App\Models\Horse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

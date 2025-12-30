@@ -50,6 +50,7 @@ const conflictCheckError = ref<string | null>(null);
 const conflictModalOpen = ref(false);
 const conflicts = ref<{ timeslots: any[]; trainers: any[]; horses: any[] }>({ timeslots: [], trainers: [], horses: [] });
 const presetInitialHorses = ref<any[]>([]);
+const presetInitialTrainers = ref<any[]>([]);
 
 function toIso(value: string) {
     return normalizeDateTimeToIso(value);
@@ -302,6 +303,7 @@ async function tryPrefillFromPreset() {
         (form as any).horse_ids = Array.isArray(data.horse_ids) ? data.horse_ids : [];
         (form as any).color = data.color ?? null;
         presetInitialHorses.value = Array.isArray(data.horses) ? data.horses : [];
+        presetInitialTrainers.value = Array.isArray(data.trainers) ? data.trainers : [];
     } catch {
         // ignore
     }
@@ -535,6 +537,7 @@ function submitAnyway() {
                             label="Trainers (optional)"
                             placeholder="Type to search and add trainers"
                             v-model="(form as any).trainer_ids"
+                            :initial="presetInitialTrainers"
                         />
                         <InputError :message="(form.errors as any)['trainer_ids.*']" />
                     </div>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/InputError.vue';
-import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
+import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
@@ -19,6 +19,7 @@ type FormData = {
   is_group: boolean | null;
   price: number | null;
   service_name: string | null;
+  trainer_ids: number[];
   trainer_id: number | null;
   trainer_name: string | null;
   location_id: number | null;
@@ -35,6 +36,7 @@ const form = useForm<FormData>({
   is_group: null,
   price: 0,
   service_name: null,
+  trainer_ids: [],
   trainer_id: null,
   trainer_name: null,
   location_id: null,
@@ -111,14 +113,13 @@ const breadcrumbs: BreadcrumbItem[] = [
             <InputError :message="(form.errors as any).service_name" />
           </div>
           <div class="grid gap-2">
-            <TrainerTypeahead
-              input-id="trainer_name"
-              label="Trainer (optional)"
-              placeholder="Type to search trainers or enter a new name"
-              v-model="form.trainer_name"
-              @select="(t) => (form.trainer_name = t.name)"
+            <TrainerMultiTypeahead
+              input-id="trainer_ids"
+              label="Default Trainers (optional)"
+              placeholder="Type to search and add trainers"
+              v-model="form.trainer_ids"
             />
-            <InputError :message="(form.errors as any).trainer_name" />
+            <InputError :message="(form.errors as any).trainer_ids" />
           </div>
         </div>
 

@@ -23,6 +23,8 @@ class StoreTimeslotPresetRequest extends FormRequest
             'is_group' => ['nullable', 'boolean'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'service_name' => ['nullable', 'string', 'max:255'],
+            'trainer_ids' => ['nullable', 'array'],
+            'trainer_ids.*' => ['integer', 'exists:trainers,id'],
             'trainer_id' => ['nullable', 'integer', 'exists:users,id'],
             'trainer_name' => ['nullable', 'string', 'max:255'],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],

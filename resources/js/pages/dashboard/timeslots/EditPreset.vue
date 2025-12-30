@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/InputError.vue';
-import TrainerTypeahead from '@/components/TrainerTypeahead.vue';
+import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 
-const props = defineProps<{ preset: any; horse_ids: number[] }>();
+const props = defineProps<{ preset: any; horse_ids: number[]; trainer_ids: number[] }>();
 
 const form = useForm({
   preset_title: props.preset?.preset_title ?? '',
@@ -21,6 +21,7 @@ const form = useForm({
   is_group: props.preset?.is_group ?? null,
   price: props.preset?.price ?? 0,
   service_name: props.preset?.service_name ?? null,
+  trainer_ids: props.trainer_ids ?? [],
   trainer_id: props.preset?.trainer_id ?? null,
   trainer_name: props.preset?.trainer_name ?? null,
   location_id: props.preset?.location_id ?? null,
@@ -96,14 +97,19 @@ const breadcrumbs: BreadcrumbItem[] = [
             <InputError :message="(form.errors as any).service_name" />
           </div>
           <div class="grid gap-2">
-            <TrainerTypeahead
-              input-id="trainer_name"
-              label="Trainer (optional)"
-              placeholder="Type to search trainers or enter a new name"
-              v-model="(form as any).trainer_name"
-              @select="(t) => ((form as any).trainer_name = t.name)"
+            <TrainerMultiTypeahead
+              input-id="trainer_ids"
+              label="Default Trainers (optional)"
+              placeholder="Type to search and add trainers"
+              v-model="(form as any).trainer_ids"
+              :initial="(props.preset?.trainers ?? []).map((t: any) => ({
+                id: t.id,
+                name: t.name,
+                title: t.title,
+                photo_url: t.photo_url
+              }))"
             />
-            <InputError :message="(form.errors as any).trainer_name" />
+            <InputError :message="(form.errors as any).trainer_ids" />
           </div>
         </div>
 

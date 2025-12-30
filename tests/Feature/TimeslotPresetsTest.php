@@ -86,7 +86,9 @@ it('deploys a preset and serves JSON for prefill including horse image URL when 
     expect($data['horse_ids'])->toBe([$horse->id]);
     // We derive a photo_url from photo_path; allow either absolute or /storage/ URL
     expect($data['horses'][0]['name'])->toBe($horse->name);
+    expect($data['horses'][0]['breed'])->toBe($horse->breed);
     expect($data['horses'][0])->toHaveKey('photo_url');
+    expect($data['horses'][0]['photo_url'])->not->toBeNull();
 });
 
 it('calendar feed includes color on events and defaults when null', function () {

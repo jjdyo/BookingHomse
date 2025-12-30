@@ -53,6 +53,8 @@ class TimeslotPresetController extends Controller
         $data = $request->validated();
         $horseIds = (array) ($data['horse_ids'] ?? []);
         unset($data['horse_ids']);
+        $trainerIds = (array) ($data['trainer_ids'] ?? []);
+        unset($data['trainer_ids']);
 
         // Normalize nullable -> defaults to satisfy NOT NULL constraints (e.g., SQLite)
         $data['capacity'] = $data['capacity'] ?? 1;
@@ -63,13 +65,16 @@ class TimeslotPresetController extends Controller
         if (! empty($horseIds)) {
             $preset->horses()->sync(array_values(array_unique($horseIds)));
         }
+        if (! empty($trainerIds)) {
+            $preset->trainers()->sync(array_values(array_unique($trainerIds)));
+        }
 
         return redirect()->route('dashboard.timeslots.presets')->with('success', 'Preset created.');
     }
 
     public function edit(TimeslotPreset $preset): Response
     {
-        $preset->load('horses');
+        $preset->load(['horses', 'trainers']);
         // Build a stable, explicit payload to ensure horses (with photo_path) are present client-side
         $payload = [
             'id' => $preset->id,
@@ -92,11 +97,18 @@ class TimeslotPresetController extends Controller
                 'photo_path' => $h->photo_path,
                 'breed' => $h->breed,
             ])->all(),
+            'trainers' => $preset->trainers->map(fn ($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'title' => $t->title,
+                'photo_url' => $t->photo_url,
+            ])->all(),
         ];
 
         return Inertia::render('dashboard/timeslots/EditPreset', [
             'preset' => $payload,
             'horse_ids' => $preset->horses->pluck('id'),
+            'trainer_ids' => $preset->trainers->pluck('id'),
         ]);
     }
 
@@ -105,6 +117,8 @@ class TimeslotPresetController extends Controller
         $data = $request->validated();
         $horseIds = (array) ($data['horse_ids'] ?? []);
         unset($data['horse_ids']);
+        $trainerIds = (array) ($data['trainer_ids'] ?? []);
+        unset($data['trainer_ids']);
 
         // Normalize nullable -> defaults
         $data['capacity'] = $data['capacity'] ?? 1;
@@ -113,6 +127,7 @@ class TimeslotPresetController extends Controller
 
         $preset->update($data);
         $preset->horses()->sync(array_values(array_unique($horseIds)));
+        $preset->trainers()->sync(array_values(array_unique($trainerIds)));
 
         return redirect()->route('dashboard.timeslots.presets')->with('success', 'Preset updated.');
     }
@@ -139,7 +154,7 @@ class TimeslotPresetController extends Controller
                 if ($hasPhotoPath) {
                     $columns[] = 'photo_path';
                 }
-                $preset->load(['horses:'.implode(',', $columns)]);
+                $preset->load(['horses:'.implode(',', $columns), 'trainers:id,name,photo_path,title']);
 
                 return [
                     'id' => $preset->id,
@@ -154,12 +169,21 @@ class TimeslotPresetController extends Controller
                     'location_id' => $preset->location_id,
                     'color' => $preset->color,
                     'horse_ids' => $preset->horses->pluck('id')->all(),
+                    'trainer_ids' => $preset->trainers->pluck('id')->all(),
                     'horses' => $preset->horses->map(function ($h) use ($hasPhotoPath, $hasBreed) {
                         return [
                             'id' => $h->id,
                             'name' => $h->name,
                             'photo_url' => $hasPhotoPath && $h->photo_path ? Storage::url($h->photo_path) : null,
                             'breed' => $hasBreed ? $h->breed : null,
+                        ];
+                    })->all(),
+                    'trainers' => $preset->trainers->map(function ($t) {
+                        return [
+                            'id' => $t->id,
+                            'name' => $t->name,
+                            'title' => $t->title,
+                            'photo_url' => $t->photo_url,
                         ];
                     })->all(),
                 ];
@@ -169,7 +193,7 @@ class TimeslotPresetController extends Controller
                     'error' => $e->getMessage(),
                 ]);
                 // Fallback minimal response
-                $preset->load(['horses:id,name']);
+                $preset->load(['horses:id,name', 'trainers:id,name']);
 
                 return [
                     'id' => $preset->id,
@@ -184,11 +208,17 @@ class TimeslotPresetController extends Controller
                     'location_id' => $preset->location_id,
                     'color' => $preset->color,
                     'horse_ids' => $preset->horses->pluck('id')->all(),
+                    'trainer_ids' => $preset->trainers->pluck('id')->all(),
                     'horses' => $preset->horses->map(fn ($h) => [
                         'id' => $h->id,
                         'name' => $h->name,
                         'photo_url' => null,
                         'breed' => null,
+                    ])->all(),
+                    'trainers' => $preset->trainers->map(fn ($t) => [
+                        'id' => $t->id,
+                        'name' => $t->name,
+                        'photo_url' => null,
                     ])->all(),
                 ];
             }

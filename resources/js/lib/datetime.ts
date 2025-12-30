@@ -77,7 +77,7 @@ export function formatIsoToInputDateTime(value: string | Date | null | undefined
 
         // sv-SE gives YYYY-MM-DD HH:mm
         return formatter.format(d).replace(' ', 'T');
-    } catch (e) {
+    } catch {
         // Fallback to local if TZ fails
         const pad = (n: number) => String(n).padStart(2, '0');
         const yyyy = d.getFullYear();
