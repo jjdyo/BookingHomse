@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import BasicLayout from '@/layouts/BasicLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import type { BreadcrumbItemType } from '@/types';
+import { computed } from 'vue';
 
 interface Props {
     timeslot: {
@@ -14,12 +17,30 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => {
+    // Try to determine if we came from dashboard or public booking
+    const isFromDashboard = typeof document !== 'undefined' && document.referrer.includes('/dashboard');
+
+    const baseBreadcrumb = isFromDashboard
+        ? { title: 'Timeslots', href: '/dashboard/timeslots' }
+        : { title: 'Request Booking', href: '/request-booking' };
+
+    return [
+        baseBreadcrumb,
+        { title: props.timeslot.title }
+    ];
+});
 </script>
 
 <template>
     <Head :title="`Book: ${props.timeslot.title}`" />
     <BasicLayout>
         <section class="mx-auto max-w-2xl p-6">
+            <div class="mb-6">
+                <Breadcrumbs :breadcrumbs="breadcrumbs" />
+            </div>
+
             <h1 class="text-2xl font-semibold">Book: {{ props.timeslot.title }}</h1>
             <p class="mt-2 text-muted-foreground">This is a placeholder page. Booking flow will be implemented next.</p>
 

@@ -252,6 +252,15 @@
 
 }
 
+/* Global FullCalendar button spacing overrides for all screen sizes */
+.booking-calendar .fc .fc-button-group {
+    gap: 0.5rem;
+}
+.booking-calendar .fc .fc-button-group > .fc-button {
+    border-radius: var(--radius-md) !important;
+    margin-left: 0 !important;
+}
+
 /* Make FullCalendar events easier to read on our booking pages */
 /* Scoped to .booking-calendar so it only affects booking calendars */
 .booking-calendar .fc .fc-event {
@@ -292,10 +301,23 @@
         font-size: 1.1rem;
     }
 
-    /* Make buttons slightly smaller on mobile to save space */
+    /* Make buttons slightly smaller on mobile to save space and add gap */
     .booking-calendar .fc .fc-button {
         padding: 0.375rem 0.5rem;
         font-size: 0.875rem;
+        margin-right: 0.25rem;
+    }
+
+    .booking-calendar .fc .fc-button:last-child {
+        margin-right: 0;
+    }
+
+    /* Add space between button groups and buttons */
+    .booking-calendar .fc .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        gap: 0.5rem;
     }
 
     /* Stack buttons in groups if they still overflow */
@@ -303,6 +325,12 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
+        gap: 0.25rem;
+    }
+
+    .booking-calendar .fc .fc-button-group > .fc-button {
+        flex: 0 1 auto;
+        margin: 0 !important; /* reset default fc margins in favor of gap */
     }
 
     /* Hide day names on very small screens in month view if they are too wide */
