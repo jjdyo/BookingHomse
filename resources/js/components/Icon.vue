@@ -1,7 +1,39 @@
 <script setup lang="ts">
 import { cn } from '@/lib/utils';
-import * as icons from 'lucide-vue-next';
+import {
+    Search,
+    Filter,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    MoreHorizontal,
+    Plus,
+    Clock,
+    User,
+    MapPin,
+    DollarSign,
+    Info,
+    Edit,
+    Trash2,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
+
+const icons: Record<string, any> = {
+    Search,
+    Filter,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    MoreHorizontal,
+    Plus,
+    Clock,
+    User,
+    MapPin,
+    DollarSign,
+    Info,
+    Edit,
+    Trash2,
+};
 
 interface Props {
     name: string;
@@ -20,8 +52,12 @@ const props = withDefaults(defineProps<Props>(), {
 const className = computed(() => cn('h-4 w-4', props.class));
 
 const icon = computed(() => {
-    const iconName = props.name.charAt(0).toUpperCase() + props.name.slice(1);
-    return (icons as Record<string, any>)[iconName];
+    // Convert kebab-case to PascalCase (e.g. "chevron-right" to "ChevronRight")
+    const iconName = props.name
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join('');
+    return icons[iconName];
 });
 </script>
 

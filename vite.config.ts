@@ -16,15 +16,25 @@ export default defineConfig({
             formVariants: true,
         }),
         vue({
-            template: {
-                transformAssetUrls: {
-                    base: null,
-                    includeAbsolute: false,
-                },
+        template: {
+            transformAssetUrls: {
+                base: null,
+                includeAbsolute: false,
             },
-        }),
-    ],
-    server: {
+        },
+    }),
+],
+build: {
+    rollupOptions: {
+        output: {
+            manualChunks: {
+                fullcalendar: ['@fullcalendar/core', '@fullcalendar/vue3'],
+                'fullcalendar-plugins': ['@fullcalendar/daygrid', '@fullcalendar/timegrid', '@fullcalendar/interaction'],
+            },
+        },
+    },
+},
+server: {
         host: '0.0.0.0',
         hmr: {
             host: 'localhost',

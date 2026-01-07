@@ -5,15 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/InputError.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions, type CalendarFilterState } from '@/composables/useBookingCalendar';
 import CalendarFilters from '@/components/CalendarFilters.vue';
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue';
+
+const FullCalendar = defineAsyncComponent(() => import('@fullcalendar/vue3'));
+const TimeslotSidebar = defineAsyncComponent(() => import('@/components/TimeslotSidebar.vue'));
+
 import { normalizeDateTimeToIso } from '@/lib/datetime';
 import TrainerMultiTypeahead from '@/components/TrainerMultiTypeahead.vue';
 import HorseTypeahead from '@/components/HorseTypeahead.vue';
 import LocationTypeahead from '@/components/LocationTypeahead.vue';
-import TimeslotSidebar from '@/components/TimeslotSidebar.vue';
 
 type FormData = {
     title: string;

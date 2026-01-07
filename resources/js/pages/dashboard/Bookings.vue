@@ -4,12 +4,13 @@ import { Head } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard, home } from '@/routes';
 
-import FullCalendar from '@fullcalendar/vue3';
 import { useBookingCalendarOptions, type CalendarFilterState } from '@/composables/useBookingCalendar';
 import CalendarFilters from '@/components/CalendarFilters.vue';
-import TimeslotSidebar from '@/components/TimeslotSidebar.vue';
 
-import { ref } from 'vue';
+import { ref, defineAsyncComponent } from 'vue';
+
+const FullCalendar = defineAsyncComponent(() => import('@fullcalendar/vue3'));
+const TimeslotSidebar = defineAsyncComponent(() => import('@/components/TimeslotSidebar.vue'));
 
 type EventClickArg = { event: any };
 
