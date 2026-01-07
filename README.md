@@ -11,46 +11,62 @@ Whether you're running a riding school, boarding stable, or equestrian center, B
 
 ## Features
 
-### Current & Upcoming
+### Implemented
 
-- **🐴 Horse Cooldown Management** - Give your horses the rest they deserve. Automatically track and enforce cooldown periods after riding sessions to ensure horse welfare and prevent overwork.
+- **🐴 Timeslot Management** - Create and manage riding availability with customizable start/end times, capacity, price, and assignments.
+- **📅 Interactive Booking Calendar** - A full-featured FullCalendar interface for both public booking requests and administrative oversight.
+- **🐎 Horse Management** - Track your stable with a dedicated horse database, including breed, description, and bookability status.
+- **👤 Trainer Profiles** - Manage trainers and associate them with specific timeslots.
+- **🖼️ Integrated Media Manager** - A custom-built media management system with directory organization, image deduplication, and automatic thumbnail generation.
+- **⚙️ Site Configuration** - Global settings for site branding, logo management, and dynamic booking hour constraints.
+- **🔐 Robust Authentication** - Secure access control for admins and clients, with automatic redirect handling for the booking flow.
 
-- **📱 SMS & Email Reminders** - Never miss an appointment again. Automated notifications keep riders informed about upcoming bookings and any schedule changes.
+### Planned & Upcoming
 
-- **👥 Group Ride Capabilities** - Book multiple horses for group outings with friends and family. Group bookings can be configured to require management approval for better control.
-
-- **📊 Management Dashboard** - Comprehensive administrative interface to oversee all upcoming and requested appointments at a glance. Accept, decline, or reschedule bookings with ease.
-
-- **⚙️ Flexible Approval System** - Configure auto-acceptance for routine bookings or require manual approval for complex scenarios like group rides or specific horses.
-
-- **🔔 Smart Notifications** - Keep everyone in the loop with real-time updates on booking status, approvals, and schedule changes.
+- **🐴 Horse Cooldown Management** - Automatically track and enforce cooldown periods after riding sessions.
+- **📱 SMS & Email Reminders** - Automated notifications for upcoming bookings and schedule changes.
+- **🗓️ Google Calendar Sync** - Two-way synchronization with external calendars using Spatie Laravel Google Calendar.
 
 ## Technology Stack
 
-- **Backend**: Laravel
-- **Frontend**: Vue.js with Inertia.js
-- **Architecture**: Modern SPA experience with server-side routing
+- **Backend**: Laravel 12 (PHP 8.4)
+- **Frontend**: Vue 3 with Inertia.js v2
+- **Bundling**: Vite 7
+- **Styling**: Tailwind CSS 4
+- **Calendar**: FullCalendar 6
 
-## Request Booking Calendar (Foundation)
+## Getting Started
 
-A blank Vue FullCalendar has been added to the Request Booking page as a foundation for future features.
+### Prerequisites
 
-- Route: GET /request-booking (named: request-booking)
-- Vue page: resources/js/pages/RequestBooking.vue
-- Packages used: @fullcalendar/core, @fullcalendar/vue3, @fullcalendar/daygrid, @fullcalendar/timegrid, @fullcalendar/interaction
+- PHP 8.4+
+- Node.js & NPM
+- Composer
 
-### How to run locally
+### Installation & Local Development
 
-1. Install PHP and JS dependencies:
-   - composer install
-   - npm install
-2. Copy .env.example to .env and configure DB and APP_URL. Optionally set VITE_TZ for calendar timezone (e.g., VITE_TZ=America/New_York).
-3. Run database migrations:
-   - php artisan migrate
-4. Start dev servers:
-   - php artisan serve
-   - npm run dev
-5. Visit http://127.0.0.1:8000/request-booking to see the blank calendar.
+1. **Clone & Install Dependencies**:
+   ```bash
+   composer install
+   npm install
+   ```
 
-Notes:
-- The calendar currently renders without events. Backend endpoints and GCal sync will be added later.
+2. **Environment Setup**:
+   Copy `.env.example` to `.env` and configure your database and `APP_URL`.
+   Set `VITE_TZ` for your preferred calendar timezone (e.g., `VITE_TZ=America/New_York`).
+
+3. **Database Setup**:
+   ```bash
+   php artisan migrate
+   ```
+
+4. **Start Development Servers**:
+   ```bash
+   php artisan serve
+   # and in a separate terminal
+   npm run dev
+   ```
+
+5. **Access the Application**:
+   - Public Booking: [http://127.0.0.1:8000/request-booking](http://127.0.0.1:8000/request-booking)
+   - Admin Dashboard: [http://127.0.0.1:8000/dashboard/timeslots](http://127.0.0.1:8000/dashboard/timeslots)
