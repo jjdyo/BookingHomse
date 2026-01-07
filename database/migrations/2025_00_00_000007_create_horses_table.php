@@ -17,6 +17,9 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->string('photo_path')->nullable();
             $table->timestamps();
+
+            $table->index('name');
+            $table->index('is_bookable');
         });
     }
 

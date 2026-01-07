@@ -40,6 +40,8 @@ return new class extends Migration
             $table->index(['timeslot_id']);
             $table->index(['user_id']);
             $table->index(['horse_id']);
+            $table->index(['paid_at']);
+            $table->index(['cancelled_at']);
         });
     }
 

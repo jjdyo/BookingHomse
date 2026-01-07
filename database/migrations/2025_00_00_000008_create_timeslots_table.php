@@ -47,6 +47,8 @@ return new class extends Migration
             // Helpful indexes
             $table->index(['start_at']);
             $table->index(['end_at']);
+            $table->index(['service_name']);
+            $table->index(['is_group']);
         });
     }
 
