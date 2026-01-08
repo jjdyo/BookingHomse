@@ -81,9 +81,44 @@ class TimeslotController extends Controller
         });
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $config = SiteConfig::instance();
+        $presetData = null;
+
+        if ($id = $request->query('preset')) {
+            $preset = \App\Models\TimeslotPreset::with(['horses', 'trainers', 'location'])->find($id);
+            if ($preset) {
+                // Determine available columns for horses
+                $hasPhotoPath = \Illuminate\Support\Facades\Schema::hasColumn('horses', 'photo_path');
+                $hasBreed = \Illuminate\Support\Facades\Schema::hasColumn('horses', 'breed');
+
+                $presetData = [
+                    'title' => $preset->title,
+                    'description' => $preset->description,
+                    'capacity' => (int) $preset->capacity,
+                    'price' => (float) $preset->price,
+                    'service_name' => $preset->service_name,
+                    'location_id' => $preset->location_id,
+                    'location_name' => $preset->location?->label ?? $preset->location?->name,
+                    'color' => $preset->color,
+                    'trainer_ids' => $preset->trainers->pluck('id')->all(),
+                    'trainers' => $preset->trainers->map(fn ($t) => [
+                        'id' => $t->id,
+                        'name' => $t->name,
+                        'title' => $t->title,
+                        'photo_url' => $t->photo_url,
+                    ])->all(),
+                    'horse_ids' => $preset->horses->pluck('id')->all(),
+                    'horses' => $preset->horses->map(fn ($h) => [
+                        'id' => $h->id,
+                        'name' => $h->name,
+                        'photo_url' => $hasPhotoPath && $h->photo_path ? \Illuminate\Support\Facades\Storage::url($h->photo_path) : null,
+                        'breed' => $hasBreed ? $h->breed : null,
+                    ])->all(),
+                ];
+            }
+        }
 
         return Inertia::render('timeslots/CreateTimeslot', [
             'warnings' => [
@@ -92,6 +127,7 @@ class TimeslotController extends Controller
                 'horse_cooldown' => (bool) $config->warn_horse_cooldown,
                 'timeslots' => (bool) $config->warn_overbook_timeslots,
             ],
+            'preset' => $presetData,
         ]);
     }
 

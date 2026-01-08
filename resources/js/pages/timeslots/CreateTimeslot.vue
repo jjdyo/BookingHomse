@@ -31,22 +31,24 @@ type FormData = {
     color: string | null;
 };
 
-const form = useForm<FormData>({
-    title: '',
-    description: '',
-    start_at: '',
-    end_at: '',
-    capacity: 1,
-    price: 0,
-    service_name: null,
-    trainer_ids: [],
-    location_id: null,
-    horse_ids: [],
-    color: '#3B82F6',
-});
-
 type Warnings = { trainers: boolean; horses: boolean; horse_cooldown: boolean; timeslots: boolean };
-const props = defineProps<{ warnings: Warnings }>();
+const props = defineProps<{
+    warnings: Warnings;
+    preset?: {
+        title: string;
+        description: string;
+        capacity: number | null;
+        price: number | null;
+        service_name: string | null;
+        location_id: number | null;
+        location_name: string | null;
+        color: string | null;
+        trainer_ids: number[];
+        trainers: any[];
+        horse_ids: number[];
+        horses: any[];
+    } | null;
+}>();
 
 const checkingConflicts = ref(false);
 const conflictCheckError = ref<string | null>(null);
@@ -57,8 +59,23 @@ const conflicts = ref<{ timeslots: any[]; trainers: any[]; horses: any[]; cooldo
     horses: [],
     cooldowns: [],
 });
-const presetInitialHorses = ref<any[]>([]);
-const presetInitialTrainers = ref<any[]>([]);
+const presetInitialHorses = ref<any[]>(props.preset?.horses ?? []);
+const presetInitialTrainers = ref<any[]>(props.preset?.trainers ?? []);
+const presetInitialLocationName = ref<string | null>(props.preset?.location_name ?? null);
+
+const form = useForm<FormData>({
+    title: props.preset?.title ?? '',
+    description: props.preset?.description ?? '',
+    start_at: '',
+    end_at: '',
+    capacity: props.preset?.capacity ?? 1,
+    price: props.preset?.price ?? 0,
+    service_name: props.preset?.service_name ?? null,
+    trainer_ids: props.preset?.trainer_ids ?? [],
+    location_id: props.preset?.location_id ?? null,
+    horse_ids: props.preset?.horse_ids ?? [],
+    color: props.preset?.color ?? '#3B82F6',
+});
 
 function toIso(value: string) {
     return normalizeDateTimeToIso(value);
@@ -119,13 +136,44 @@ const hasAnyRelevantConflicts = computed(() => {
     );
 });
 
+const dateValidationError = computed(() => {
+    const start = (form as any).start_at as string;
+    const end = (form as any).end_at as string;
+    if (!start || !end) return null;
+
+    const s = new Date(start).getTime();
+    const e = new Date(end).getTime();
+
+    if (s >= e) {
+        return 'End time must be after start time.';
+    }
+    return null;
+});
+
+const conflictSummary = computed(() => {
+    const c = conflicts.value;
+    const parts = [];
+    if (props.warnings.timeslots && c.timeslots.length > 0) parts.push(`${c.timeslots.length} timeslot overlap(s)`);
+    if (props.warnings.trainers && c.trainers.length > 0) parts.push(`${c.trainers.length} trainer overlap(s)`);
+    if (props.warnings.horses && c.horses.length > 0) parts.push(`${c.horses.length} horse overlap(s)`);
+    if (props.warnings.horse_cooldown && c.cooldowns.length > 0) parts.push(`${c.cooldowns.length} cooldown violation(s)`);
+    return parts.join(', ');
+});
+
 async function checkConflicts(): Promise<boolean> {
+    const start = (form as any).start_at as string;
+    const end = (form as any).end_at as string;
+
+    if (!start || !end) {
+        return false;
+    }
+
     checkingConflicts.value = true;
     conflictCheckError.value = null;
     try {
         const payload = {
-            start_at: toIso((form as any).start_at as unknown as string),
-            end_at: toIso((form as any).end_at as unknown as string),
+            start_at: toIso(start),
+            end_at: toIso(end),
             trainer_ids: (form as any).trainer_ids,
             horse_ids: (form as any).horse_ids,
         } as any;
@@ -176,11 +224,14 @@ async function submit() {
         return;
     }
 
-    form.transform((data) => ({
-        ...data,
-        start_at: toIso((data as any).start_at),
-        end_at: toIso((data as any).end_at),
-    }));
+    form.transform((data) => {
+        const payload = {
+            ...data,
+            start_at: toIso((data as any).start_at),
+            end_at: toIso((data as any).end_at),
+        };
+        return payload;
+    });
 
     form.post('/timeslots', {
         onFinish: () => {
@@ -286,37 +337,8 @@ onMounted(() => {
             successCallback(ev ? [ev] : []);
         },
     });
-
-    // Prefill from preset when provided as ?preset=ID
-    tryPrefillFromPreset();
 });
 
-async function tryPrefillFromPreset() {
-    const sp = new URLSearchParams(window.location.search);
-    const id = sp.get('preset');
-    if (!id) return;
-    try {
-        const res = await fetch(`/dashboard/timeslots/presets/${encodeURIComponent(id)}`, {
-            headers: { Accept: 'application/json' },
-            credentials: 'same-origin',
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        // Fill relevant fields, leaving start/end times untouched
-        (form as any).title = data.title ?? '';
-        (form as any).description = data.description ?? '';
-        (form as any).capacity = data.capacity ?? 1;
-        (form as any).price = data.price ?? 0;
-        (form as any).service_name = data.service_name ?? null;
-        (form as any).trainer_ids = Array.isArray(data.trainer_ids) ? data.trainer_ids : [];
-        (form as any).horse_ids = Array.isArray(data.horse_ids) ? data.horse_ids : [];
-        (form as any).color = data.color ?? null;
-        presetInitialHorses.value = Array.isArray(data.horses) ? data.horses : [];
-        presetInitialTrainers.value = Array.isArray(data.trainers) ? data.trainers : [];
-    } catch {
-        // ignore
-    }
-}
 
 // Update preview as the user types/changes times or color
 watch(() => [(form as any).start_at, (form as any).end_at, (form as any).title, (form as any).color], () => {
@@ -325,11 +347,14 @@ watch(() => [(form as any).start_at, (form as any).end_at, (form as any).title, 
 
 // Proceed with save ignoring conflicts (used by modal "Continue")
 function submitAnyway() {
-    form.transform((data) => ({
-        ...data,
-        start_at: toIso((data as any).start_at),
-        end_at: toIso((data as any).end_at),
-    }));
+    form.transform((data) => {
+        const payload = {
+            ...data,
+            start_at: toIso((data as any).start_at),
+            end_at: toIso((data as any).end_at),
+        };
+        return payload;
+    });
     form.post('/timeslots', {
         onFinish: () => {
             form.transform((d) => d as any);
@@ -419,8 +444,11 @@ function submitAnyway() {
                     </div>
 
                     <div class="mt-4 space-y-4 max-h-[60vh] overflow-auto">
-                        <div v-if="props.warnings.timeslots && conflicts.timeslots.length" class="rounded-md border p-3">
-                            <h3 class="font-medium">Overlapping Timeslots ({{ conflicts.timeslots.length }})</h3>
+                        <div v-if="props.warnings.timeslots && conflicts.timeslots.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                            <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-range"><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M4 10h16"/><path d="M17 14h-6"/><path d="M13 18H7"/></svg>
+                                Overlapping Timeslots ({{ conflicts.timeslots.length }})
+                            </h3>
                             <div class="mt-2 grid gap-2">
                                 <div v-for="t in conflicts.timeslots" :key="'ts-' + t.id" class="rounded-md border bg-white p-3 text-sm shadow-sm">
                                     <div class="font-medium">
@@ -430,7 +458,6 @@ function submitAnyway() {
                                         <span class="font-medium">{{ toLocal(t.start_at) }}</span>
                                         →
                                         <span class="font-medium">{{ toLocal(t.end_at) }}</span>
-                                        — your timeslot <span class="font-medium">{{ describeOverlap(currentStart as any, currentEnd as any, t.start_at, t.end_at) }}</span> this.
                                     </div>
                                     <div v-if="t.trainer_names && t.trainer_names.length" class="mt-1 text-muted-foreground">
                                         <span class="font-medium">Trainers:</span> {{ (t.trainer_names || []).join(', ') }}
@@ -442,57 +469,60 @@ function submitAnyway() {
                             </div>
                         </div>
 
-                        <div v-if="props.warnings.trainers && conflicts.trainers.length" class="rounded-md border p-3">
-                            <h3 class="font-medium">Trainer Overlaps ({{ conflicts.trainers.length }})</h3>
+                        <div v-if="props.warnings.trainers && conflicts.trainers.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                            <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Trainer Overlaps ({{ conflicts.trainers.length }})
+                            </h3>
                             <div class="mt-2 grid gap-2">
                                 <div v-for="t in conflicts.trainers" :key="'tr-' + t.id" class="rounded-md border bg-white p-3 text-sm shadow-sm">
-                                    <div class="font-medium">Trainer conflict in “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”.</div>
-                                    <div v-if="t.trainers && t.trainers.length" class="text-sm text-muted-foreground">Trainers: {{ t.trainers.map((x: any) => x.name).join(', ') }}</div>
-                                    <div class="mt-1 text-muted-foreground">
-                                        <span class="font-medium">{{ toLocal(t.start_at) }}</span>
-                                        →
-                                        <span class="font-medium">{{ toLocal(t.end_at) }}</span>
-                                        — your timeslot <span class="font-medium">{{ describeOverlap(currentStart as any, currentEnd as any, t.start_at, t.end_at) }}</span> this.
+                                    <div class="font-medium text-orange-700">Trainer is already busy during this time.</div>
+                                    <div class="mt-1">
+                                        Busy in “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”
                                     </div>
-                                    <div v-if="t.service_name" class="mt-1 text-muted-foreground">
-                                        <span class="font-medium">Service:</span> {{ t.service_name }}
+                                    <div v-if="t.trainers && t.trainers.length" class="text-sm text-muted-foreground">Trainers: {{ t.trainers.map((x: any) => x.name).join(', ') }}</div>
+                                    <div class="mt-1 text-muted-foreground text-xs">
+                                        {{ toLocal(t.start_at) }} → {{ toLocal(t.end_at) }}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div v-if="props.warnings.horses && conflicts.horses.length" class="rounded-md border p-3">
-                            <h3 class="font-medium">Horse Overlaps ({{ conflicts.horses.length }})</h3>
+                        <div v-if="props.warnings.horses && conflicts.horses.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                            <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                Horse Overlaps ({{ conflicts.horses.length }})
+                            </h3>
                             <div class="mt-2 grid gap-2">
                                 <div v-for="t in conflicts.horses" :key="'h-' + t.id" class="rounded-md border bg-white p-3 text-sm shadow-sm">
-                                    <div class="font-medium">
-                                        Horse{{ (t.horses?.length ?? 0) > 1 ? 's' : '' }} {{ t.horses?.map((h: any) => h.name).join(', ') || '#' + t.id }}
+                                    <div class="font-medium text-orange-700">
+                                        Horse{{ (t.horses?.length ?? 0) > 1 ? 's' : '' }} {{ t.horses?.map((h: any) => h.name).join(', ') || '#' + t.id }} unavailable.
                                     </div>
-                                    <div class="mt-1 text-muted-foreground">
+                                    <div class="mt-1">
                                         Already assigned to “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”
-                                        from <span class="font-medium">{{ toLocal(t.start_at) }}</span> to <span class="font-medium">{{ toLocal(t.end_at) }}</span>
-                                        — your timeslot <span class="font-medium">{{ describeOverlap(currentStart as any, currentEnd as any, t.start_at, t.end_at) }}</span> this.
                                     </div>
-                                    <div v-if="t.service_name" class="mt-1 text-muted-foreground">
-                                        <span class="font-medium">Service:</span> {{ t.service_name }}
+                                    <div class="mt-1 text-muted-foreground text-xs">
+                                        {{ toLocal(t.start_at) }} → {{ toLocal(t.end_at) }}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div v-if="props.warnings.horse_cooldown && conflicts.cooldowns.length" class="rounded-md border p-3">
-                            <h3 class="font-medium">Horse Cooldown Violations ({{ conflicts.cooldowns.length }})</h3>
+                        <div v-if="props.warnings.horse_cooldown && conflicts.cooldowns.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                            <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-timer"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+                                Horse Cooldown Violations ({{ conflicts.cooldowns.length }})
+                            </h3>
                             <div class="mt-2 grid gap-2">
                                 <div v-for="(c, idx) in conflicts.cooldowns" :key="'cd-' + idx" class="rounded-md border bg-white p-3 text-sm shadow-sm">
-                                    <div class="font-medium">
-                                        <span class="font-semibold">{{ c.horse.name }}</span> needs a <span class="font-semibold">{{ c.cooldown_text }}</span> cooldown.
+                                    <div class="font-medium text-orange-700">
+                                        <span class="font-semibold">{{ c.horse.name }}</span> needs more recovery time.
                                     </div>
-                                    <div class="mt-1 text-muted-foreground">
-                                        Found nearby timeslot “<span class="font-semibold">{{ c.title || 'Untitled' }}</span>”
-                                        from <span class="font-medium">{{ toLocal(c.start_at) }}</span> to <span class="font-medium">{{ toLocal(c.end_at) }}</span>.
+                                    <div class="mt-1">
+                                        Needs <span class="font-semibold">{{ c.cooldown_text }}</span> cooldown after “<span class="font-semibold">{{ c.title || 'Untitled' }}</span>”.
                                     </div>
-                                    <div v-if="c.service_name" class="mt-1 text-muted-foreground">
-                                        <span class="font-medium">Service:</span> {{ c.service_name }}
+                                    <div class="mt-1 text-muted-foreground text-xs">
+                                        Previous slot: {{ toLocal(c.start_at) }} → {{ toLocal(c.end_at) }}
                                     </div>
                                 </div>
                             </div>
@@ -501,7 +531,7 @@ function submitAnyway() {
 
                     <div class="mt-6 flex items-center justify-end gap-3">
                         <button type="button" class="rounded-md border px-4 py-2" @click="conflictModalOpen = false">Keep Editing</button>
-                        <Button type="button" class="bg-red-600 hover:bg-red-700" @click="() => { conflictModalOpen = false; submitAnyway(); }">Continue</Button>
+                        <Button type="button" class="bg-red-600 hover:bg-red-700 text-white" @click="() => { conflictModalOpen = false; submitAnyway(); }">Continue Anyway</Button>
                     </div>
                 </div>
             </div>
@@ -529,15 +559,18 @@ function submitAnyway() {
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div class="grid gap-2">
-                            <Label for="start_at">Start</Label>
-                            <Input id="start_at" name="start_at" v-model="form.start_at" type="datetime-local" required />
+                            <Label for="start_at" :class="{ 'text-red-600': dateValidationError }">Start</Label>
+                            <Input id="start_at" name="start_at" v-model="form.start_at" type="datetime-local" required :class="{ 'border-red-500': dateValidationError }" />
                             <InputError :message="form.errors.start_at" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="end_at">End</Label>
-                            <Input id="end_at" name="end_at" v-model="form.end_at" type="datetime-local" required />
+                            <Label for="end_at" :class="{ 'text-red-600': dateValidationError }">End</Label>
+                            <Input id="end_at" name="end_at" v-model="form.end_at" type="datetime-local" required :class="{ 'border-red-500': dateValidationError }" />
                             <InputError :message="form.errors.end_at" />
                         </div>
+                    </div>
+                    <div v-if="dateValidationError" class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                        {{ dateValidationError }}
                     </div>
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -560,25 +593,28 @@ function submitAnyway() {
                             <InputError :message="form.errors.service_name" />
                         </div>
                         <div class="grid gap-2">
-                            <TrainerMultiTypeahead
-                                input-id="trainer_ids"
-                                label="Trainers (optional)"
-                                placeholder="Type to search and add trainers"
-                                v-model="(form as any).trainer_ids"
-                                :initial="presetInitialTrainers"
+                            <LocationTypeahead
+                                input-id="location_id"
+                                label="Location (optional)"
+                                placeholder="Type to search locations"
+                                v-model="form.location_id"
+                                :initial-name="presetInitialLocationName"
                             />
-                            <InputError :message="(form.errors as any)['trainer_ids.*']" />
+                            <InputError :message="(form.errors as any).location_id" />
                         </div>
                     </div>
 
                     <div class="grid gap-2">
-                        <LocationTypeahead
-                            input-id="location_id"
-                            label="Location (optional)"
-                            placeholder="Type to search locations"
-                            v-model="form.location_id"
+                        <TrainerMultiTypeahead
+                            input-id="trainer_ids"
+                            label="Trainers (optional)"
+                            placeholder="Type to search and add trainers"
+                            v-model="(form as any).trainer_ids"
+                            :initial="presetInitialTrainers"
+                            :class="{ 'border-orange-400 rounded-md border-2 p-1': props.warnings.trainers && conflicts.trainers.length }"
                         />
-                        <InputError :message="(form.errors as any).location_id" />
+                        <p v-if="props.warnings.trainers && conflicts.trainers.length" class="text-xs text-orange-600 font-medium">Potential trainer conflict detected.</p>
+                        <InputError :message="(form.errors as any)['trainer_ids.*']" />
                     </div>
 
                     <div class="grid gap-2">
@@ -595,7 +631,9 @@ function submitAnyway() {
                             placeholder="Type to search and add horses"
                             v-model="form.horse_ids"
                             :initial="presetInitialHorses"
+                            :class="{ 'border-orange-400 rounded-md border-2 p-1': (props.warnings.horses && conflicts.horses.length) || (props.warnings.horse_cooldown && conflicts.cooldowns.length) }"
                         />
+                        <p v-if="(props.warnings.horses && conflicts.horses.length) || (props.warnings.horse_cooldown && conflicts.cooldowns.length)" class="text-xs text-orange-600 font-medium">Potential horse conflict or cooldown violation detected.</p>
                         <p class="text-xs text-muted-foreground">Selected horses will be linked to this timeslot and used for overlap warnings.</p>
                         <InputError :message="form.errors['horse_ids.*'] as any" />
                     </div>
@@ -603,10 +641,10 @@ function submitAnyway() {
                     <div class="flex items-center justify-end gap-3">
                         <div class="mr-auto text-xs text-muted-foreground">
                             <span v-if="!conflictCheckError && !hasAnyRelevantConflicts">No conflicts returned or warnings disabled.</span>
-                            <span v-else-if="hasAnyRelevantConflicts">Conflicts detected — you will be prompted before saving.</span>
+                            <span v-else-if="hasAnyRelevantConflicts" class="text-orange-600 font-medium">Conflicts detected ({{ conflictSummary }}) — you will be prompted before saving.</span>
                             <span v-else-if="conflictCheckError">Conflict check failed — fix and try again, or use Continue in the modal after a successful check.</span>
                         </div>
-                        <Button type="submit" :disabled="form.processing || checkingConflicts">
+                        <Button type="submit" :disabled="form.processing || checkingConflicts || !!dateValidationError">
                             {{ form.processing || checkingConflicts ? 'Saving…' : 'Save Timeslot' }}
                         </Button>
                     </div>

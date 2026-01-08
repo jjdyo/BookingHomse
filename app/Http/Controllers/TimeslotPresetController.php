@@ -154,10 +154,12 @@ class TimeslotPresetController extends Controller
                 if ($hasPhotoPath) {
                     $columns[] = 'photo_path';
                 }
-                $preset->load(['horses:'.implode(',', $columns), 'trainers:id,name,photo_path,title']);
+                $preset->load(['horses:'.implode(',', $columns), 'trainers:id,name,photo_path,title', 'location']);
 
                 return [
                     'id' => $preset->id,
+                    'preset_title' => $preset->preset_title,
+                    'preset_description' => $preset->preset_description,
                     'title' => $preset->title,
                     'description' => $preset->description,
                     'capacity' => $preset->capacity,
@@ -167,6 +169,7 @@ class TimeslotPresetController extends Controller
                     'trainer_id' => $preset->trainer_id,
                     'trainer_name' => $preset->trainer_name,
                     'location_id' => $preset->location_id,
+                    'location' => $preset->location,
                     'color' => $preset->color,
                     'horse_ids' => $preset->horses->pluck('id')->all(),
                     'trainer_ids' => $preset->trainers->pluck('id')->all(),

@@ -1,5 +1,5 @@
 export function normalizeDateTimeToIso(value: string, timeZone: string = import.meta.env.VITE_TZ || 'UTC'): string {
-    if (!value) return value;
+    if (!value) return '';
 
     // value is expected to be in YYYY-MM-DDTHH:mm format from datetime-local input
     // If it already looks like an ISO string with TZ info, just return it
@@ -8,19 +8,8 @@ export function normalizeDateTimeToIso(value: string, timeZone: string = import.
     }
 
     try {
-        // We want to treat the "wall clock" time in 'value' as being in 'timeZone'
-        // Intl.DateTimeFormat can help us find the offset, but simpler is often using
-        // the fact that we can construct a string that JS Date will parse as that TZ.
-
-        // However, many browsers don't support TZ in the Date constructor string reliably
-        // for all IANA names without a library like luxon or date-fns-tz.
-
-        // Given we want to avoid extra heavy dependencies if possible, and we know
-        // the calendar uses this same VITE_TZ, we can use a trick:
-        // Format the date as if it were in the target TZ, find the difference from UTC.
-
         const date = new Date(value);
-        if (isNaN(date.getTime())) return value;
+        if (isNaN(date.getTime())) return '';
 
         // If timeZone is UTC, we can just use toISOString but we must ensure
         // the local time selected in the picker is treated as UTC.

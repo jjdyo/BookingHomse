@@ -130,13 +130,44 @@ const hasAnyRelevantConflicts = computed(() => {
     );
 });
 
+const dateValidationError = computed(() => {
+    const start = (form as any).start_at as string;
+    const end = (form as any).end_at as string;
+    if (!start || !end) return null;
+
+    const s = new Date(start).getTime();
+    const e = new Date(end).getTime();
+
+    if (s >= e) {
+        return 'End time must be after start time.';
+    }
+    return null;
+});
+
+const conflictSummary = computed(() => {
+    const c = conflicts.value;
+    const parts = [];
+    if (props.warnings.timeslots && c.timeslots.length > 0) parts.push(`${c.timeslots.length} timeslot overlap(s)`);
+    if (props.warnings.trainers && c.trainers.length > 0) parts.push(`${c.trainers.length} trainer overlap(s)`);
+    if (props.warnings.horses && c.horses.length > 0) parts.push(`${c.horses.length} horse overlap(s)`);
+    if (props.warnings.horse_cooldown && c.cooldowns.length > 0) parts.push(`${c.cooldowns.length} cooldown violation(s)`);
+    return parts.join(', ');
+});
+
 async function checkConflicts(): Promise<boolean> {
+    const start = (form as any).start_at as string;
+    const end = (form as any).end_at as string;
+
+    if (!start || !end) {
+        return false;
+    }
+
     checkingConflicts.value = true;
     conflictCheckError.value = null;
     try {
         const payload = {
-            start_at: normalizeDateTimeToIso((form as any).start_at as unknown as string),
-            end_at: normalizeDateTimeToIso((form as any).end_at as unknown as string),
+            start_at: normalizeDateTimeToIso(start),
+            end_at: normalizeDateTimeToIso(end),
             trainer_ids: (form as any).trainer_ids,
             horse_ids: (form as any).horse_ids,
             exclude_id: props.timeslot.id,
@@ -250,8 +281,11 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
 
               <div class="mt-4 space-y-4 max-h-[60vh] overflow-auto">
-                  <div v-if="props.warnings.timeslots && conflicts.timeslots.length" class="rounded-md border p-3">
-                      <h3 class="font-medium">Overlapping Timeslots ({{ conflicts.timeslots.length }})</h3>
+                  <div v-if="props.warnings.timeslots && conflicts.timeslots.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                      <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-range"><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M4 10h16"/><path d="M17 14h-6"/><path d="M13 18H7"/></svg>
+                          Overlapping Timeslots ({{ conflicts.timeslots.length }})
+                      </h3>
                       <div class="mt-2 grid gap-2">
                           <div v-for="t in conflicts.timeslots" :key="'ts-' + t.id" class="rounded-md border bg-card p-3 text-sm shadow-sm">
                               <div class="font-medium text-foreground">
@@ -269,46 +303,60 @@ const breadcrumbs: BreadcrumbItem[] = [
                       </div>
                   </div>
 
-                  <div v-if="props.warnings.trainers && conflicts.trainers.length" class="rounded-md border p-3">
-                      <h3 class="font-medium">Trainer Overlaps ({{ conflicts.trainers.length }})</h3>
+                  <div v-if="props.warnings.trainers && conflicts.trainers.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                      <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                          Trainer Overlaps ({{ conflicts.trainers.length }})
+                      </h3>
                       <div class="mt-2 grid gap-2">
                           <div v-for="t in conflicts.trainers" :key="'tr-' + t.id" class="rounded-md border bg-card p-3 text-sm shadow-sm">
-                              <div class="font-medium text-foreground">Trainer conflict in “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”.</div>
+                              <div class="font-medium text-orange-700">Trainer is already busy during this time.</div>
+                              <div class="mt-1">
+                                Busy in “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”
+                              </div>
                               <div v-if="t.trainers && t.trainers.length" class="text-xs text-muted-foreground">Trainers: {{ t.trainers.map((x: any) => x.name).join(', ') }}</div>
-                              <div class="mt-1 text-muted-foreground">
-                                  <span class="font-medium">{{ toLocal(t.start_at) }}</span>
-                                  →
-                                  <span class="font-medium">{{ toLocal(t.end_at) }}</span>
+                              <div class="mt-1 text-muted-foreground text-xs">
+                                  {{ toLocal(t.start_at) }} → {{ toLocal(t.end_at) }}
                               </div>
                           </div>
                       </div>
                   </div>
 
-                  <div v-if="props.warnings.horses && conflicts.horses.length" class="rounded-md border p-3">
-                      <h3 class="font-medium">Horse Overlaps ({{ conflicts.horses.length }})</h3>
+                  <div v-if="props.warnings.horses && conflicts.horses.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                      <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                          Horse Overlaps ({{ conflicts.horses.length }})
+                      </h3>
                       <div class="mt-2 grid gap-2">
                           <div v-for="t in conflicts.horses" :key="'h-' + t.id" class="rounded-md border bg-card p-3 text-sm shadow-sm">
-                              <div class="font-medium text-foreground">
-                                  Horse{{ (t.horses?.length ?? 0) > 1 ? 's' : '' }} {{ t.horses?.map((h: any) => h.name).join(', ') || '#' + t.id }}
+                              <div class="font-medium text-orange-700">
+                                  Horse{{ (t.horses?.length ?? 0) > 1 ? 's' : '' }} {{ t.horses?.map((h: any) => h.name).join(', ') || '#' + t.id }} unavailable.
                               </div>
-                              <div class="mt-1 text-muted-foreground">
-                                  Already assigned to “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”
-                                  from <span class="font-medium">{{ toLocal(t.start_at) }}</span> to <span class="font-medium">{{ toLocal(t.end_at) }}</span>
+                              <div class="mt-1">
+                                Already assigned to “<span class="font-semibold">{{ t.title || 'Untitled' }}</span>”
+                              </div>
+                              <div class="mt-1 text-muted-foreground text-xs">
+                                  {{ toLocal(t.start_at) }} → {{ toLocal(t.end_at) }}
                               </div>
                           </div>
                       </div>
                   </div>
 
-                  <div v-if="props.warnings.horse_cooldown && conflicts.cooldowns.length" class="rounded-md border p-3">
-                      <h3 class="font-medium">Horse Cooldown Violations ({{ conflicts.cooldowns.length }})</h3>
+                  <div v-if="props.warnings.horse_cooldown && conflicts.cooldowns.length" class="rounded-md border border-orange-200 bg-orange-50/30 p-3">
+                      <h3 class="font-medium text-orange-800 flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-timer"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+                          Horse Cooldown Violations ({{ conflicts.cooldowns.length }})
+                      </h3>
                       <div class="mt-2 grid gap-2">
                           <div v-for="(c, idx) in conflicts.cooldowns" :key="'cd-' + idx" class="rounded-md border bg-card p-3 text-sm shadow-sm">
-                              <div class="font-medium text-foreground">
-                                  <span class="font-semibold">{{ c.horse.name }}</span> needs a <span class="font-semibold">{{ c.cooldown_text }}</span> cooldown.
+                              <div class="font-medium text-orange-700">
+                                  <span class="font-semibold">{{ c.horse.name }}</span> needs more recovery time.
                               </div>
-                              <div class="mt-1 text-muted-foreground">
-                                  Found nearby timeslot “<span class="font-semibold">{{ c.title || 'Untitled' }}</span>”
-                                  from <span class="font-medium">{{ toLocal(c.start_at) }}</span> to <span class="font-medium">{{ toLocal(c.end_at) }}</span>.
+                              <div class="mt-1">
+                                Needs <span class="font-semibold">{{ c.cooldown_text }}</span> cooldown after “<span class="font-semibold">{{ c.title || 'Untitled' }}</span>”.
+                              </div>
+                              <div class="mt-1 text-muted-foreground text-xs">
+                                Previous slot: {{ toLocal(c.start_at) }} → {{ toLocal(c.end_at) }}
                               </div>
                           </div>
                       </div>
@@ -344,18 +392,21 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <div class="grid gap-2 sm:grid-cols-2">
           <div class="grid gap-2">
-            <Label for="start_at">Start</Label>
-            <Input id="start_at" name="start_at" type="datetime-local" v-model="form.start_at" required />
+            <Label for="start_at" :class="{ 'text-red-600': dateValidationError }">Start</Label>
+            <Input id="start_at" name="start_at" type="datetime-local" v-model="form.start_at" required :class="{ 'border-red-500': dateValidationError }" />
             <InputError :message="form.errors.start_at" />
           </div>
           <div class="grid gap-2">
-            <Label for="end_at">End</Label>
-            <Input id="end_at" name="end_at" type="datetime-local" v-model="form.end_at" required />
+            <Label for="end_at" :class="{ 'text-red-600': dateValidationError }">End</Label>
+            <Input id="end_at" name="end_at" type="datetime-local" v-model="form.end_at" required :class="{ 'border-red-500': dateValidationError }" />
             <InputError :message="form.errors.end_at" />
           </div>
         </div>
+        <div v-if="dateValidationError" class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            {{ dateValidationError }}
+        </div>
 
-        <div class="grid gap-2 sm:grid-cols-3">
+        <div class="grid gap-2 sm:grid-cols-2">
           <div class="grid gap-2">
             <Label for="capacity">Capacity</Label>
             <Input id="capacity" name="capacity" type="number" min="1" v-model.number="(form.capacity as any)" />
@@ -366,10 +417,6 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Input id="price" name="price" type="number" step="0.01" min="0" v-model.number="(form.price as any)" />
             <InputError :message="form.errors.price" />
           </div>
-          <div class="flex items-center gap-2 pt-6">
-            <input id="is_group" type="checkbox" v-model="form.is_group" class="h-4 w-4" />
-            <Label for="is_group">Group Session</Label>
-          </div>
         </div>
 
         <div class="grid gap-2 sm:grid-cols-2">
@@ -378,29 +425,35 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Input id="service_name" name="service_name" v-model="(form.service_name as any)" placeholder="e.g., Beginner Lesson" />
             <InputError :message="form.errors.service_name" />
           </div>
+          <div class="grid gap-2">
+            <LocationTypeahead
+              input-id="location_id"
+              label="Location (optional)"
+              placeholder="Type to search locations"
+              v-model="(form.location_id as any)"
+              :initial-name="props.timeslot.location?.label ?? props.timeslot.location?.name ?? (props.timeslot as any).location_name ?? null"
+            />
+            <InputError :message="(form.errors as any).location_id" />
+          </div>
         </div>
 
-          <div class="grid gap-2">
-              <TrainerMultiTypeahead
-                  input-id="trainer_ids"
-                  label="Trainers (optional)"
-                  placeholder="Type to search and add trainers"
-                  v-model="(form.trainer_ids as any)"
-                  :initial="(props.timeslot.trainers as any) || []"
-              />
-              <p class="text-xs text-muted-foreground">Selected trainers will be linked to this timeslot and considered for booking rules.</p>
-              <InputError :message="(form.errors as any)['trainer_ids.*']" />
-          </div>
-
         <div class="grid gap-2">
-          <LocationTypeahead
-            input-id="location_id"
-            label="Location (optional)"
-            placeholder="Type to search locations"
-            v-model="(form.location_id as any)"
-            :initialName="(props.timeslot as any).location_name || null"
-          />
-          <InputError :message="(form.errors as any).location_id" />
+            <TrainerMultiTypeahead
+                input-id="trainer_ids"
+                label="Trainers (optional)"
+                placeholder="Type to search and add trainers"
+                v-model="(form.trainer_ids as any)"
+                :initial="(props.timeslot.trainers as any) || []"
+                :class="{ 'border-orange-400 rounded-md border-2 p-1': props.warnings.trainers && conflicts.trainers.length }"
+            />
+            <p v-if="props.warnings.trainers && conflicts.trainers.length" class="text-xs text-orange-600 font-medium">Potential trainer conflict detected.</p>
+            <p class="text-xs text-muted-foreground">Selected trainers will be linked to this timeslot and considered for booking rules.</p>
+            <InputError :message="(form.errors as any)['trainer_ids.*']" />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input id="is_group" type="checkbox" v-model="form.is_group" class="h-4 w-4" />
+          <Label for="is_group">Group Session</Label>
         </div>
 
         <div class="grid gap-2">
@@ -410,14 +463,21 @@ const breadcrumbs: BreadcrumbItem[] = [
             placeholder="Type to search and add horses"
             v-model="(form.horse_ids as any)"
             :initial="(props.timeslot as any).horses || []"
+            :class="{ 'border-orange-400 rounded-md border-2 p-1': (props.warnings.horses && conflicts.horses.length) || (props.warnings.horse_cooldown && conflicts.cooldowns.length) }"
           />
+          <p v-if="(props.warnings.horses && conflicts.horses.length) || (props.warnings.horse_cooldown && conflicts.cooldowns.length)" class="text-xs text-orange-600 font-medium">Potential horse conflict or cooldown violation detected.</p>
           <p class="text-xs text-muted-foreground">Selected horses will be linked to this timeslot and considered for booking rules.</p>
           <InputError :message="(form.errors as any)['horse_ids.*'] as any" />
         </div>
 
         <div class="flex items-center justify-end gap-3">
-          <Button type="submit" :disabled="form.processing">
-            {{ form.processing ? 'Saving…' : 'Save Changes' }}
+          <div class="mr-auto text-xs text-muted-foreground">
+              <span v-if="!conflictCheckError && !hasAnyRelevantConflicts">No conflicts returned or warnings disabled.</span>
+              <span v-else-if="hasAnyRelevantConflicts" class="text-orange-600 font-medium">Conflicts detected ({{ conflictSummary }}) — you will be prompted before saving.</span>
+              <span v-else-if="conflictCheckError">Conflict check failed — fix and try again, or use Continue in the modal after a successful check.</span>
+          </div>
+          <Button type="submit" :disabled="form.processing || checkingConflicts || !!dateValidationError">
+            {{ form.processing || checkingConflicts ? 'Saving…' : 'Save Changes' }}
           </Button>
         </div>
       </form>
