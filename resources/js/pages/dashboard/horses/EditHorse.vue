@@ -155,9 +155,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <InputError :message="form.errors.description" />
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <input id="is_bookable" type="checkbox" v-model="form.is_bookable" class="h-4 w-4" />
-                    <Label for="is_bookable">Bookable</Label>
+                <div class="grid gap-2 rounded-md border bg-card p-3 text-card-foreground">
+                    <div class="flex items-center gap-2">
+                        <input id="is_bookable" type="checkbox" v-model="form.is_bookable" class="h-4 w-4" />
+                        <Label for="is_bookable">Bookable</Label>
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        This horse {{ form.is_bookable ? 'will' : 'will not' }} show up when creating or editing timeslots.
+                    </p>
                 </div>
 
                 <div class="grid gap-2">

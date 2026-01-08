@@ -106,9 +106,14 @@ const breadcrumbs: BreadcrumbItem[] = [
           <InputError :message="(form.errors as any).photo_path" />
         </div>
 
-        <div class="flex items-center gap-2">
-          <input id="is_active" type="checkbox" v-model="form.is_active" class="h-4 w-4" />
-          <Label for="is_active">Active</Label>
+        <div class="grid gap-2 rounded-md border bg-card p-3 text-card-foreground">
+          <div class="flex items-center gap-2">
+            <input id="is_active" type="checkbox" v-model="form.is_active" class="h-4 w-4" />
+            <Label for="is_active">Active</Label>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            This location {{ form.is_active ? 'will' : 'will not' }} show up when creating or editing timeslots.
+          </p>
         </div>
 
         <div class="flex items-center justify-end gap-3">
