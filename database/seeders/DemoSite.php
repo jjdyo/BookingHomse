@@ -46,8 +46,22 @@ class DemoSite extends Seeder
             }
         });
 
-        // Horses: 10
-        $horses = Horse::factory()->count(10)->create()->each(function (Horse $h) use ($horsePhotos) {
+        // Horses: 10 with varying cooldowns
+        $horses = collect();
+
+        // 3 horses without cooldown
+        $horses = $horses->concat(Horse::factory()->count(3)->create());
+
+        // 7 horses with various cooldowns
+        $horses = $horses->concat([Horse::factory()->withCooldown(30, 'minutes')->create()]);
+        $horses = $horses->concat([Horse::factory()->withCooldown(45, 'minutes')->create()]);
+        $horses = $horses->concat([Horse::factory()->withCooldown(2, 'hours')->create()]);
+        $horses = $horses->concat([Horse::factory()->withCooldown(4, 'hours')->create()]);
+        $horses = $horses->concat([Horse::factory()->withCooldown(1, 'days')->create()]);
+        $horses = $horses->concat([Horse::factory()->withCooldown(3, 'days')->create()]);
+        $horses = $horses->concat([Horse::factory()->withCooldown()->create()]); // Random one
+
+        $horses->each(function (Horse $h) use ($horsePhotos) {
             if (! empty($horsePhotos)) {
                 $h->update(['photo_path' => collect($horsePhotos)->random()]);
             }

@@ -16,6 +16,8 @@ return new class extends Migration
             $table->boolean('is_bookable')->default(true);
             $table->text('notes')->nullable();
             $table->string('photo_path')->nullable();
+            $table->integer('cooldown_duration')->nullable();
+            $table->string('cooldown_unit')->nullable(); // minutes, hours, days
             $table->timestamps();
 
             $table->index('name');

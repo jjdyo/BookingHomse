@@ -15,15 +15,14 @@ Whether you're running a riding school, boarding stable, or equestrian center, B
 
 - **🐴 Timeslot Management** - Create and manage riding availability with customizable start/end times, capacity, price, and assignments.
 - **📅 Interactive Booking Calendar** - A full-featured FullCalendar interface for both public booking requests and administrative oversight.
-- **🐎 Horse Management** - Track your stable with a dedicated horse database, including breed, description, and bookability status.
+- **🐎 Horse Management** - Track your stable with a dedicated horse database, including breed, description, bookability status, and **enforced cooldown periods**.
 - **👤 Trainer Profiles** - Manage trainers and associate them with specific timeslots.
 - **🖼️ Integrated Media Manager** - A custom-built media management system with directory organization, image deduplication, and automatic thumbnail generation.
-- **⚙️ Site Configuration** - Global settings for site branding, logo management, and dynamic booking hour constraints.
+- **⚙️ Site Configuration** - Global settings for site branding, logo management, and dynamic booking hour constraints with configurable warning toggles.
 - **🔐 Robust Authentication** - Secure access control for admins and clients, with automatic redirect handling for the booking flow.
 
 ### Planned & Upcoming
 
-- **🐴 Horse Cooldown Management** - Automatically track and enforce cooldown periods after riding sessions.
 - **📱 SMS & Email Reminders** - Automated notifications for upcoming bookings and schedule changes.
 - **🗓️ Google Calendar Sync** - Two-way synchronization with external calendars using Spatie Laravel Google Calendar.
 

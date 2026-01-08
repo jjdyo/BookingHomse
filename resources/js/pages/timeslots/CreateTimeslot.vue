@@ -45,13 +45,18 @@ const form = useForm<FormData>({
     color: '#3B82F6',
 });
 
-type Warnings = { trainers: boolean; horses: boolean; timeslots: boolean };
+type Warnings = { trainers: boolean; horses: boolean; horse_cooldown: boolean; timeslots: boolean };
 const props = defineProps<{ warnings: Warnings }>();
 
 const checkingConflicts = ref(false);
 const conflictCheckError = ref<string | null>(null);
 const conflictModalOpen = ref(false);
-const conflicts = ref<{ timeslots: any[]; trainers: any[]; horses: any[] }>({ timeslots: [], trainers: [], horses: [] });
+const conflicts = ref<{ timeslots: any[]; trainers: any[]; horses: any[]; cooldowns: any[] }>({
+    timeslots: [],
+    trainers: [],
+    horses: [],
+    cooldowns: [],
+});
 const presetInitialHorses = ref<any[]>([]);
 const presetInitialTrainers = ref<any[]>([]);
 
@@ -109,7 +114,8 @@ const hasAnyRelevantConflicts = computed(() => {
     return (
         (props.warnings.timeslots && c.timeslots.length > 0) ||
         (props.warnings.trainers && c.trainers.length > 0) ||
-        (props.warnings.horses && c.horses.length > 0)
+        (props.warnings.horses && c.horses.length > 0) ||
+        (props.warnings.horse_cooldown && c.cooldowns.length > 0)
     );
 });
 
@@ -141,17 +147,17 @@ async function checkConflicts(): Promise<boolean> {
             const text = await res.text();
             console.error('Conflict check failed', res.status, res.statusText, text);
             conflictCheckError.value = 'Unable to run conflict warnings at the moment. Please try again, or save only if you are sure.';
-            conflicts.value = { timeslots: [], trainers: [], horses: [] };
+            conflicts.value = { timeslots: [], trainers: [], horses: [], cooldowns: [] };
             return false;
         }
         const data = await res.json();
-        conflicts.value = data?.conflicts ?? { timeslots: [], trainers: [], horses: [] };
+        conflicts.value = data?.conflicts ?? { timeslots: [], trainers: [], horses: [], cooldowns: [] };
         return hasAnyRelevantConflicts.value;
     } catch (e) {
         // If conflict check fails, do not auto‑proceed; require explicit user action
         console.error('Conflict check error', e);
         conflictCheckError.value = 'Unable to run conflict warnings at the moment. Please try again, or save only if you are sure.';
-        conflicts.value = { timeslots: [], trainers: [], horses: [] };
+        conflicts.value = { timeslots: [], trainers: [], horses: [], cooldowns: [] };
         return false;
     } finally {
         checkingConflicts.value = false;
@@ -469,6 +475,24 @@ function submitAnyway() {
                                     </div>
                                     <div v-if="t.service_name" class="mt-1 text-muted-foreground">
                                         <span class="font-medium">Service:</span> {{ t.service_name }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="props.warnings.horse_cooldown && conflicts.cooldowns.length" class="rounded-md border p-3">
+                            <h3 class="font-medium">Horse Cooldown Violations ({{ conflicts.cooldowns.length }})</h3>
+                            <div class="mt-2 grid gap-2">
+                                <div v-for="(c, idx) in conflicts.cooldowns" :key="'cd-' + idx" class="rounded-md border bg-white p-3 text-sm shadow-sm">
+                                    <div class="font-medium">
+                                        <span class="font-semibold">{{ c.horse.name }}</span> needs a <span class="font-semibold">{{ c.cooldown_text }}</span> cooldown.
+                                    </div>
+                                    <div class="mt-1 text-muted-foreground">
+                                        Found nearby timeslot “<span class="font-semibold">{{ c.title || 'Untitled' }}</span>”
+                                        from <span class="font-medium">{{ toLocal(c.start_at) }}</span> to <span class="font-medium">{{ toLocal(c.end_at) }}</span>.
+                                    </div>
+                                    <div v-if="c.service_name" class="mt-1 text-muted-foreground">
+                                        <span class="font-medium">Service:</span> {{ c.service_name }}
                                     </div>
                                 </div>
                             </div>

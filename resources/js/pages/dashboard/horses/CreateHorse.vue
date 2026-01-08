@@ -18,6 +18,8 @@ type FormData = {
     notes: string | null;
     photo: File | null;
     photo_path: string | null;
+    cooldown_duration: number | null;
+    cooldown_unit: 'minutes' | 'hours' | 'days' | null;
 };
 
 const form = useForm<FormData>({
@@ -28,7 +30,22 @@ const form = useForm<FormData>({
     notes: null,
     photo: null,
     photo_path: null,
+    cooldown_duration: null,
+    cooldown_unit: null,
 });
+
+const showCooldown = ref(false);
+
+function toggleCooldown(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked;
+  if (!checked) {
+    form.cooldown_duration = null;
+    form.cooldown_unit = null;
+  } else {
+    form.cooldown_duration = 30;
+    form.cooldown_unit = 'minutes';
+  }
+}
 
 const previewUrl = ref<string | null>(null);
 const showPicker = ref(false);
@@ -125,6 +142,41 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div class="flex items-center gap-2">
                     <input id="is_bookable" type="checkbox" v-model="form.is_bookable" class="h-4 w-4" />
                     <Label for="is_bookable">Bookable</Label>
+                </div>
+
+                <div class="grid gap-2">
+                    <div class="flex items-center gap-2">
+                        <input id="cooldown" type="checkbox" v-model="showCooldown" @change="toggleCooldown" class="h-4 w-4" />
+                        <Label for="cooldown">Cooldown</Label>
+                    </div>
+                    <div v-if="showCooldown" class="mt-2 rounded-md border bg-muted/50 p-4">
+                        <div class="flex flex-wrap items-center gap-2 text-sm">
+                            <span>{{ form.name || 'This horse' }} should have</span>
+                            <Input
+                                type="number"
+                                v-model="form.cooldown_duration"
+                                class="w-20"
+                                :min="1"
+                                :max="form.cooldown_unit === 'minutes' ? 59 : (form.cooldown_unit === 'hours' ? 23 : 7)"
+                            />
+                            <select
+                                v-model="form.cooldown_unit"
+                                class="rounded-md border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            >
+                                <option value="minutes">minutes</option>
+                                <option value="hours">hours</option>
+                                <option value="days">days</option>
+                            </select>
+                            <span>to cooldown between booked sessions.</span>
+                        </div>
+                        <p class="mt-3 text-xs text-muted-foreground">
+                            Attempting to book {{ form.name || 'this horse' }} earlier than configured will display a
+                            <a href="/dashboard/settings/site" class="text-blue-600 hover:underline">warning</a>
+                            if configured.
+                        </p>
+                        <InputError :message="form.errors.cooldown_duration" />
+                        <InputError :message="form.errors.cooldown_unit" />
+                    </div>
                 </div>
 
                 <div class="grid gap-2">

@@ -14,6 +14,7 @@ type PageProps = {
     logo_url?: string | null;
     warn_overbook_trainers?: boolean;
     warn_overbook_horses?: boolean;
+    warn_horse_cooldown?: boolean;
     warn_overbook_timeslots?: boolean;
     show_event_feed?: boolean;
     event_feed_lookahead_days?: number;
@@ -48,6 +49,7 @@ const form = ref({
   logo_path: null as string | null,
   warn_overbook_trainers: page.props.config.warn_overbook_trainers ?? true,
   warn_overbook_horses: page.props.config.warn_overbook_horses ?? true,
+  warn_horse_cooldown: page.props.config.warn_horse_cooldown ?? true,
   warn_overbook_timeslots: page.props.config.warn_overbook_timeslots ?? true,
   show_event_feed: page.props.config.show_event_feed ?? true,
   event_feed_lookahead_days: page.props.config.event_feed_lookahead_days ?? 7,
@@ -106,6 +108,7 @@ function onSubmit(e: Event) {
   // booleans
   if (form.value.warn_overbook_trainers) data.append('warn_overbook_trainers', '1');
   if (form.value.warn_overbook_horses) data.append('warn_overbook_horses', '1');
+  if (form.value.warn_horse_cooldown) data.append('warn_horse_cooldown', '1');
   if (form.value.warn_overbook_timeslots) data.append('warn_overbook_timeslots', '1');
   if (form.value.show_event_feed) data.append('show_event_feed', '1');
   data.append('event_feed_lookahead_days', form.value.event_feed_lookahead_days.toString());
@@ -261,6 +264,13 @@ function onSubmit(e: Event) {
                 Warn on Horse overlaps
               </label>
               <p class="mt-1 text-sm text-muted-foreground">If enabled, saving a timeslot warns when any selected horse is assigned to an overlapping timeslot.</p>
+            </div>
+            <div class="rounded-md border p-4">
+              <label class="inline-flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" v-model="form.warn_horse_cooldown" class="h-4 w-4" />
+                Warn on Horse cooldown violation
+              </label>
+              <p class="mt-1 text-sm text-muted-foreground">If enabled, saving a timeslot warns when a horse is booked too soon after its previous session.</p>
             </div>
             <div class="rounded-md border p-4">
               <label class="inline-flex items-center gap-2 text-sm font-medium">

@@ -89,6 +89,7 @@ class TimeslotController extends Controller
             'warnings' => [
                 'trainers' => (bool) $config->warn_overbook_trainers,
                 'horses' => (bool) $config->warn_overbook_horses,
+                'horse_cooldown' => (bool) $config->warn_horse_cooldown,
                 'timeslots' => (bool) $config->warn_overbook_timeslots,
             ],
         ]);
@@ -178,6 +179,7 @@ class TimeslotController extends Controller
             'warnings' => [
                 'trainers' => (bool) $config->warn_overbook_trainers,
                 'horses' => (bool) $config->warn_overbook_horses,
+                'horse_cooldown' => (bool) $config->warn_horse_cooldown,
                 'timeslots' => (bool) $config->warn_overbook_timeslots,
             ],
         ]);
@@ -299,8 +301,9 @@ class TimeslotController extends Controller
         }
 
         $horseConflicts = collect();
+        $cooldownConflicts = collect();
         if (! empty($horseIds)) {
-            // Join pivot to find overlapping timeslots that include any of the selected horses
+            // Standard overlap check
             $horseOverlaps = Timeslot::query()
                 ->where('start_at', '<', $end)
                 ->where('end_at', '>', $start)
@@ -322,6 +325,66 @@ class TimeslotController extends Controller
                     'horses' => $t->horses->map(fn ($h) => ['id' => $h->id, 'name' => $h->name])->values(),
                 ];
             });
+
+            // Cooldown check
+            $horsesWithCooldown = \App\Models\Horse::whereIn('id', $horseIds)
+                ->whereNotNull('cooldown_duration')
+                ->whereNotNull('cooldown_unit')
+                ->get(['id', 'name', 'cooldown_duration', 'cooldown_unit']);
+
+            foreach ($horsesWithCooldown as $horse) {
+                $duration = $horse->cooldown_duration;
+                $unit = $horse->cooldown_unit;
+                $cooldownMinutes = match ($unit) {
+                    'minutes' => $duration,
+                    'hours' => $duration * 60,
+                    'days' => $duration * 24 * 60,
+                    default => 0,
+                };
+
+                if ($cooldownMinutes <= 0) {
+                    continue;
+                }
+
+                // A cooldown violation exists if there's a timeslot E such that:
+                // T overlaps with [E.start_at, E.end_at + cooldown]
+                // OR
+                // E overlaps with [T.start_at, T.end_at + cooldown]
+                // (This simplifies to: T.start < E.end + C AND E.start < T.end + C)
+
+                $violatingTimeslots = Timeslot::query()
+                    ->whereHas('horses', fn ($q) => $q->where('horses.id', $horse->id))
+                    ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+                    // Standard overlap is already handled by $horseConflicts,
+                    // so we only care about "near-misses" within the cooldown period.
+                    // However, for simplicity, we can just find all that violate the formula.
+                    ->get()
+                    ->filter(function (Timeslot $t) use ($start, $end, $cooldownMinutes) {
+                        $eStart = $t->start_at;
+                        $eEnd = $t->end_at;
+
+                        // Check T.start < E.end + C AND E.start < T.end + C
+                        $conflict = $start->lt($eEnd->copy()->addMinutes($cooldownMinutes)) &&
+                                   $eStart->lt($end->copy()->addMinutes($cooldownMinutes));
+
+                        // Only report if it's NOT a standard overlap (to avoid duplicate warnings)
+                        $standardOverlap = $start->lt($eEnd) && $eStart->lt($end);
+
+                        return $conflict && ! $standardOverlap;
+                    });
+
+                foreach ($violatingTimeslots as $t) {
+                    $cooldownConflicts->push([
+                        'id' => $t->id,
+                        'title' => $t->title,
+                        'start_at' => $t->start_at->toIso8601String(),
+                        'end_at' => $t->end_at->toIso8601String(),
+                        'service_name' => $t->service_name,
+                        'horse' => ['id' => $horse->id, 'name' => $horse->name],
+                        'cooldown_text' => "{$duration} {$unit}",
+                    ]);
+                }
+            }
         }
 
         $payload = [
@@ -329,6 +392,7 @@ class TimeslotController extends Controller
                 'timeslots' => $timeslotConflicts->values(),
                 'trainers' => $trainerConflicts->values(),
                 'horses' => $horseConflicts->values(),
+                'cooldowns' => $cooldownConflicts->values(),
             ],
         ];
 

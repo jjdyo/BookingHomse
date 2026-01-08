@@ -16,10 +16,13 @@ class Horse extends Model
         'is_bookable',
         'notes',
         'photo_path',
+        'cooldown_duration',
+        'cooldown_unit',
     ];
 
     protected $casts = [
         'is_bookable' => 'boolean',
+        'cooldown_duration' => 'integer',
     ];
 
     /**

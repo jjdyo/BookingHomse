@@ -17,7 +17,7 @@ class HorseController extends Controller
     {
         $horses = Horse::query()
             ->ordered()
-            ->get(['id', 'name', 'description', 'breed', 'is_bookable', 'notes', 'photo_path', 'created_at', 'updated_at'])
+            ->get(['id', 'name', 'description', 'breed', 'is_bookable', 'notes', 'photo_path', 'cooldown_duration', 'cooldown_unit', 'created_at', 'updated_at'])
             ->map(function (Horse $h) {
                 return [
                     'id' => $h->id,
@@ -28,6 +28,8 @@ class HorseController extends Controller
                     'notes' => $h->notes,
                     'photo_path' => $h->photo_path,
                     'photo_url' => $h->photo_url,
+                    'cooldown_duration' => $h->cooldown_duration,
+                    'cooldown_unit' => $h->cooldown_unit,
                     'created_at' => $h->created_at,
                     'updated_at' => $h->updated_at,
                 ];
@@ -60,6 +62,8 @@ class HorseController extends Controller
             'is_bookable' => (bool) ($data['is_bookable'] ?? true),
             'notes' => $data['notes'] ?? null,
             'photo_path' => $photoPath,
+            'cooldown_duration' => $data['cooldown_duration'] ?? null,
+            'cooldown_unit' => $data['cooldown_unit'] ?? null,
         ]);
 
         return redirect()->route('dashboard.horses')->with('success', 'Horse created.');
@@ -68,7 +72,7 @@ class HorseController extends Controller
     public function edit(Horse $horse): Response
     {
         return Inertia::render('dashboard/horses/EditHorse', [
-            'horse' => $horse->only(['id', 'name', 'description', 'breed', 'is_bookable', 'notes', 'photo_path']) + [
+            'horse' => $horse->only(['id', 'name', 'description', 'breed', 'is_bookable', 'notes', 'photo_path', 'cooldown_duration', 'cooldown_unit']) + [
                 'photo_url' => $horse->photo_url,
             ],
         ]);
@@ -84,6 +88,8 @@ class HorseController extends Controller
             'breed' => $data['breed'] ?? null,
             'is_bookable' => (bool) ($data['is_bookable'] ?? false),
             'notes' => $data['notes'] ?? null,
+            'cooldown_duration' => $data['cooldown_duration'] ?? null,
+            'cooldown_unit' => $data['cooldown_unit'] ?? null,
         ];
 
         if ($request->hasFile('photo')) {

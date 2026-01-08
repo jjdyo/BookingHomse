@@ -23,6 +23,7 @@ class SiteConfigController extends Controller
                 'logo_url' => $config->logo_url,
                 'warn_overbook_trainers' => (bool) $config->warn_overbook_trainers,
                 'warn_overbook_horses' => (bool) $config->warn_overbook_horses,
+                'warn_horse_cooldown' => (bool) $config->warn_horse_cooldown,
                 'warn_overbook_timeslots' => (bool) $config->warn_overbook_timeslots,
                 'show_event_feed' => (bool) $config->show_event_feed,
                 'event_feed_lookahead_days' => (int) $config->event_feed_lookahead_days,
@@ -81,6 +82,7 @@ class SiteConfigController extends Controller
             'logo_path' => ['nullable', 'string', 'max:1024'],
             'warn_overbook_trainers' => ['nullable', 'boolean'],
             'warn_overbook_horses' => ['nullable', 'boolean'],
+            'warn_horse_cooldown' => ['nullable', 'boolean'],
             'warn_overbook_timeslots' => ['nullable', 'boolean'],
             'show_event_feed' => ['nullable', 'boolean'],
             'event_feed_lookahead_days' => ['required', 'integer', 'min:1', 'max:31'],
@@ -100,6 +102,7 @@ class SiteConfigController extends Controller
         // Booleans: if missing from request, treat as false (HTML unchecked checkboxes are omitted)
         $config->warn_overbook_trainers = (bool) ($request->boolean('warn_overbook_trainers'));
         $config->warn_overbook_horses = (bool) ($request->boolean('warn_overbook_horses'));
+        $config->warn_horse_cooldown = (bool) ($request->boolean('warn_horse_cooldown'));
         $config->warn_overbook_timeslots = (bool) ($request->boolean('warn_overbook_timeslots'));
         $config->show_event_feed = (bool) ($request->boolean('show_event_feed'));
         $config->event_feed_lookahead_days = (int) $data['event_feed_lookahead_days'];
@@ -146,6 +149,7 @@ class SiteConfigController extends Controller
             'logo_url' => $config->logo_url,
             'warn_overbook_trainers' => (bool) $config->warn_overbook_trainers,
             'warn_overbook_horses' => (bool) $config->warn_overbook_horses,
+            'warn_horse_cooldown' => (bool) $config->warn_horse_cooldown,
             'warn_overbook_timeslots' => (bool) $config->warn_overbook_timeslots,
             'show_event_feed' => (bool) $config->show_event_feed,
             'event_feed_lookahead_days' => (int) $config->event_feed_lookahead_days,

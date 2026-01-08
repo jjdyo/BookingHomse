@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean('warn_overbook_timeslots')->default(true);
             $table->boolean('show_event_feed')->default(true);
             $table->integer('event_feed_lookahead_days')->default(7);
+            $table->boolean('warn_horse_cooldown')->default(true);
             $table->timestamps();
         });
 
